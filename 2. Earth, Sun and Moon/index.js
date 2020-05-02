@@ -1,4 +1,4 @@
-import * as THREE from "../src/build/three.module.js";
+import * as THREE from "https://threejsfundamentals.org/threejs/resources/threejs/r115/build/three.module.js";
 import {GUI} from 'https://threejsfundamentals.org/threejs/../3rdparty/dat.gui.module.js';
 
 function main(){
