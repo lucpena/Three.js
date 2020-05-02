@@ -27,7 +27,7 @@ function main(){
     const boxDepth = 1;
     const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
 
-    //SAMPLE TEXT
+    //CREATE THE CUBES
     function makeInstance(geometry, color, x){
         const material = new THREE.MeshPhongMaterial({color});
         const cube = new THREE.Mesh(geometry, material);
@@ -69,10 +69,12 @@ function main(){
             camera.updateProjectionMatrix();
         }
 
+         //RECALCULATE THE ASPECT RATIO
         const canvas = renderer.domElement;
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
-
+        
+        //ROTATE THE CUBES
         cubes.forEach((cube, ndx) => {
             const speed = 1 + ndx * 0.1;
             const rot = time * speed;
