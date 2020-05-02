@@ -68,11 +68,6 @@ function main(){
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
         }
-
-         //RECALCULATE THE ASPECT RATIO
-        const canvas = renderer.domElement;
-        camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        camera.updateProjectionMatrix();
         
         //ROTATE THE CUBES
         cubes.forEach((cube, ndx) => {
