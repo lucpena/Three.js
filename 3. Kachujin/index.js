@@ -28,7 +28,7 @@ function main(){
 
     //ILLUMINATION
     const colorLight = 0xFFFFFF;
-    const intensity = 1.2;
+    const intensity = 0.8;
     const light = new THREE.DirectionalLight(colorLight, intensity);
     light.position.set(-80, 250, 200);
     light.castShadow = true;
@@ -37,9 +37,9 @@ function main(){
     light.shadow.camera.left = - 120;
     light.shadow.camera.right = 120;
     scene.add(light);
-	
+
     const hLight = new THREE.HemisphereLight(0xFFFFFF, 0xFFFFFF, 0.7);
-    hLight.color.setHSL(0.9, 1, 0.9); // (HUE, SATURATION, LIGHTNESS)
+    hLight.color.setHSL(1, 1, 1); // (HUE, SATURATION, LIGHTNESS)
     hLight.position.set(0, 50, 0);
     scene.add(hLight);
 
