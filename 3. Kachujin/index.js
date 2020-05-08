@@ -37,6 +37,11 @@ function main(){
     light.shadow.camera.left = - 120;
     light.shadow.camera.right = 120;
     scene.add(light);
+	
+    const hLight = new THREE.HemisphereLight(0xFFFFFF, 0xFFFFFF, 0.7);
+    hLight.color.setHSL(0.9, 1, 0.9); // (HUE, SATURATION, LIGHTNESS)
+    hLight.position.set(0, 50, 0);
+    scene.add(hLight);
 
     //GROUND
     const mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0xCCCCCC, depthWrite: true } ) );
