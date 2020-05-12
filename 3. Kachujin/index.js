@@ -43,6 +43,17 @@ function main(){
     hLight.position.set(0, 50, 0);
     scene.add(hLight);
 
+    //LOADING SCREEN
+    const loadingManager = new THREE.LoadingManager(() => {
+        const loadingScreen = document.getElementById("loading-screen");
+        loadingScreen.classList.add("fade-out");
+        loadingScreen.addEventListener("transitionend", onTransitionEnd);
+    });
+
+    function onTransitionEnd(event) {
+        event.target.remove();
+    }
+
     //GROUND
     const mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0xCCCCCC, depthWrite: true } ) );
     mesh.rotation.x = - Math.PI / 2;
@@ -57,7 +68,7 @@ function main(){
 
     //ANIMATION CONTROLLER
     let mixer;
-    const loader = new FBXLoader();
+    const loader = new FBXLoader(loadingManager);
     loader.load("fbx/kachujin.fbx", function(obj){
         mixer = new THREE.AnimationMixer(obj);
         const action = mixer.clipAction(obj.animations[0]);
@@ -87,6 +98,7 @@ function main(){
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
         const needResize = canvas.width !== width || canvas.height !== height;
+        
         if (needResize) {
             render.setSize(width, height, false);
         }
@@ -113,7 +125,6 @@ function main(){
         angle += 0.005;
         camera.position.x = radius * Math.cos (angle);
         camera.position.z = radius * Math.sin(angle);
-        
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
