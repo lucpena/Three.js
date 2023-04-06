@@ -11,7 +11,10 @@ import { FBXLoader } from "fbxsrc";
 let scene, camera, renderer, canvas, controls, clock, model, stats, container;
 let composer, renderPass;
 let delta = 0;
-let lookAtObj = new THREE.Vector3();
+
+let angle = 0;
+let radius = 1.5;
+
 const statsEnabled = false;
 let btnPressed = false;
 
@@ -80,8 +83,7 @@ function init() {
     const near   = 0.1;
     const far    = 5000;
     camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 3, 9.5);
-    camera.lookAt(0,-1,0);
+    camera.position.set(0, 2.5, 8.5);
     controls = new FirstPersonControls( camera, renderer.domElement );
     controls.movementSpeed = 10;
     controls.lookSpeed = 0.25;
@@ -176,8 +178,6 @@ function init() {
         }});
 
         scene.add(model);
-        lookAtObj = model.position;
-
 
     }, undefined, 
 
@@ -447,15 +447,18 @@ function init() {
                 
 
         light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) );
-        camera.fov = 50 - light.intensity / 4;
+        camera.fov = 50 - light.intensity;
         camera.updateProjectionMatrix();
         if ( light.intensity <= 0.1 ) light.color.setHSL(Math.random() % 255, Math.random() % 255, Math.random() % 255);
-        //console.log(clock)
 
         // UPDATING THE CAMERA CONTROLS
         //controls.update( delta ); 
         //camera.lookAt(lookAtObj);        
         //camera.rotation.y += delta/2;
+
+        angle += 0.005;
+        camera.position.x = radius * Math.cos(angle);
+        camera.lookAt(radius * Math.cos(angle) / 10,-1,0);
 
         if( statsEnabled ) stats.update();
 
