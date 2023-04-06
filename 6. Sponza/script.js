@@ -193,8 +193,8 @@ function init() {
         cube1.rotation.y = time * 0.0008;
 
         // UPDATING THE CAMERA CONTROLS
-        controls.update( clock.getDelta() ); 
-        //camera.lookAt(0, 2, 0);
+        //controls.update( clock.getDelta() ); 
+        camera.lookAt(0, 2, 0);
 
         if ( statsEnabled ) stats.update();
 
