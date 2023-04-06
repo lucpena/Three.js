@@ -59,7 +59,7 @@ function init() {
     const near   = 0.1;
     const far    = 5000;
     camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 2, 8.8);
+    camera.position.set(0, 3, 9.5);
     camera.lookAt(0,-1,0);
     controls = new FirstPersonControls( camera, renderer.domElement );
     controls.movementSpeed = 10;
@@ -107,7 +107,9 @@ function init() {
 //  ======================================= SCENE =============================
 
     // FOR ANIMATIONS
-    let MariMixer, ValkMixer, LealMixer, HarryMixer, KonstriktorMixer, BluMixer;
+    let MariMixer, ValkMixer, LealMixer, 
+        HarryMixer, KonstriktorMixer, BluMixer,
+        MasterBlackMixer;
 
 
     if( statsEnabled ) {
@@ -116,6 +118,27 @@ function init() {
         container.appendChild( stats.dom );
 
     }
+
+    // AUDIO HANDLER
+    const Listener = new THREE.AudioListener();
+    camera.add( Listener );
+
+    const sound = new THREE.Audio( Listener );
+
+    const AudioLoader = new THREE.AudioLoader();
+    AudioLoader.load('media/better_off_alone_128.mp3', buffer => {
+
+        sound.setBuffer( buffer );
+        sound.setLoop(true);
+        sound.setVolume(0.4);
+        sound.play();
+
+    });
+
+    const Analyser = new THREE.AudioAnalyser( sound, 32 );
+
+    // GET AVERAGE FREQUENCY
+    const SoundData = Analyser.getAverageFrequency();
 
     // LOADING NIGHTCLUB
     const NightclubLoader = new GLTFLoader(loadingManager);
@@ -344,6 +367,42 @@ function init() {
     
             }
         );
+
+        // LOADING MASTER BLACK...
+        const MasterBlackLoader = new GLTFLoader(loadingManager);
+        MasterBlackLoader.load('peps/OBJ/preto.glb', ( gltf ) => {
+    
+                const model = gltf.scene;
+                MasterBlackMixer = new THREE.AnimationMixer(gltf).scene;
+                model.position.set(-3,0,4);
+                model.rotation.set(0,1,0);
+                model.scale.set(1,1,1);
+    
+                model.traverse(n => { if ( n.isMesh ) {
+                    n.castShadow = true; 
+                    n.receiveShadow = true;
+                    n.material.transparent = false;
+                    if(n.material.map) n.material.map.anisotropy = 1; 
+                    }});
+    
+                scene.add( model );
+    
+                const animations = gltf.animations;              
+                MasterBlackMixer = new THREE.AnimationMixer(model);
+                MasterBlackMixer.clipAction(animations[0]).play();
+            },
+            function ( xhr ) {
+    
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+    
+            },
+            function ( error ) {
+    
+                console.log( 'An error happened' );
+    
+            }
+        );
+        
         
 
     // RENDERING THE SCENE
@@ -352,14 +411,17 @@ function init() {
         requestAnimationFrame( render );
 
         delta = clock.getDelta();
-        if (MariMixer || ValkMixer || LealMixer || HarryMixer || KonstriktorMixer || BluMixer) {
+        // WAIT ANIMATIONS TO BE ALL READY
+        if (MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer ) {
             MariMixer.update(delta);
             ValkMixer.update(delta);
             LealMixer.update(delta);
             HarryMixer.update(delta);
             KonstriktorMixer.update(delta);
             BluMixer.update(delta);
+            MasterBlackMixer.update(delta);
         }
+        
 
         light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) );
         camera.fov = 50 - light.intensity / 4;
