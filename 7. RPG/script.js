@@ -12,7 +12,7 @@ let scene, camera, renderer, canvas, controls, clock, model, stats, container;
 let composer, renderPass;
 let delta = 0;
 let lookAtObj = new THREE.Vector3();
-const statsEnabled = true;
+const statsEnabled = false;
 let btnPressed = false;
 
 function init() {
