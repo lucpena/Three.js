@@ -13,15 +13,36 @@ let composer, renderPass;
 let delta = 0;
 let lookAtObj = new THREE.Vector3();
 const statsEnabled = true;
+let btnPressed = false;
 
 function init() {
 
     //LOADING SCREEN
+    const loadingScreen = document.getElementById("loading-screen");        
     const loadingManager = new THREE.LoadingManager(() => {
-        const loadingScreen = document.getElementById("loading-screen");
-        loadingScreen.classList.add("fade-out");
-        loadingScreen.addEventListener("transitionend", onTransitionEnd);
+        document.getElementById("startBtn").style.opacity = 1;
+        WaitButton();
     });
+
+    function WaitButton() {
+
+        if (!btnPressed ) {
+            setTimeout(WaitButton,2500);
+            console.log("Pls press button...")
+        } else {
+            loadingScreen.classList.add("fade-out");
+            loadingScreen.addEventListener("transitionend", onTransitionEnd);
+            StartMusic();   
+        }
+        
+    }
+
+    document.getElementById("startBtn").onclick = function() {btnClicked()};
+    function btnClicked() {
+        btnPressed = !btnPressed;
+        console.log( btnPressed );
+        document.getElementById("startBtn").remove();
+    }
 
     function onTransitionEnd(event) {
         event.target.remove();
@@ -128,12 +149,13 @@ function init() {
     const AudioLoader = new THREE.AudioLoader();
     AudioLoader.load('media/better_off_alone_128.mp3', buffer => {
 
-        sound.setBuffer( buffer );
-        sound.setLoop(true);
-        sound.setVolume(0.4);
-        sound.play();
+    sound.setBuffer( buffer );
+    sound.setLoop(true);
+    sound.setVolume(0.4);
 
     });
+
+    function StartMusic(){ sound.play() }
 
     const Analyser = new THREE.AudioAnalyser( sound, 32 );
 
@@ -421,7 +443,8 @@ function init() {
             BluMixer.update(delta);
             MasterBlackMixer.update(delta);
         }
-        
+
+                
 
         light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) );
         camera.fov = 50 - light.intensity / 4;
