@@ -3,17 +3,13 @@ import Stats from "statssrc";
 import { GLTFLoader } from "gltfsrc";
 //import { OrbitControls } from "orbitsrc";
 import { FirstPersonControls } from "fpssrc";
-import { EffectComposer } from "fxcompsrc";
-import { RenderPass } from "renderpasssrc";
-import { SSAOPass  } from "ssaopasssrc";
-import { FBXLoader } from "fbxsrc";
 
 let scene, camera, renderer, canvas, controls, clock, model, stats, container;
-let composer, renderPass;
 let delta = 0;
+let StartAnimations = false;
 
 let angle = 0;
-let radius = 1.5;
+let radius = 3.5;
 
 const statsEnabled = false;
 let btnPressed = false;
@@ -21,9 +17,11 @@ let btnPressed = false;
 function init() {
 
     //LOADING SCREEN
-    const loadingScreen = document.getElementById("loading-screen");        
+    const loadingScreen = document.getElementById("loading-screen");     
+
     const loadingManager = new THREE.LoadingManager(() => {
         document.getElementById("startBtn").style.opacity = 1;
+        document.getElementById("loader").remove();
         WaitButton();
     });
 
@@ -43,7 +41,7 @@ function init() {
     document.getElementById("startBtn").onclick = function() {btnClicked()};
     function btnClicked() {
         btnPressed = !btnPressed;
-        console.log( btnPressed );
+        StartAnimations = !StartAnimations;
         document.getElementById("startBtn").remove();
     }
 
@@ -63,10 +61,10 @@ function init() {
     // RENDERER
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     //renderer.setPixelRatio( window.devicePixelRatio ); // GOOD RESOLUTION BUT BAD IN PHONES !!! NOT RECOMMENDED
-    renderer.setPixelRatio( window.devicePixelRatio * 0.4 );
+    renderer.setPixelRatio( window.devicePixelRatio * 0.5 );
     renderer.setSize( window.innerWidth, window.innerHeight );   
     renderer.shadowMap.enabled = true;  
-    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 2;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;        
     renderer.outputEncoding = THREE.sRGBEncoding;
@@ -81,10 +79,11 @@ function init() {
     // CAMERA
     const fov    = 50;
     const aspect = window.innerWidth / window.innerHeight;
-    const near   = 0.1;
-    const far    = 5000;
+    const near   = 0.01;
+    const far    = 500;
     camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 2.5, 8.5);
+    //camera.position.set(0, 2.5, 8.5);
+    camera.position.set(0, 2.2, 9);
     controls = new FirstPersonControls( camera, renderer.domElement );
     controls.movementSpeed = 10;
     controls.lookSpeed = 0.25;
@@ -96,10 +95,9 @@ function init() {
     scene.add( hemiLight );
 
     // DIRECTIONAL LIGHT
-    let intensityModifier;
     const colorLight = 0xff00ff;
     const intensity = 0.1;
-    let light = new THREE.DirectionalLight(colorLight, intensity * intensityModifier);
+    let light = new THREE.DirectionalLight(colorLight, intensity);
     scene.add( light );
 
     // LIGHT SHADOWS
@@ -113,20 +111,6 @@ function init() {
     light.shadow.camera.far = 200    
     light.shadow.mapSize.width = 4096;
     light.shadow.mapSize.height = 4096;
-    
-    // POST PROCESSING
-    composer = new EffectComposer( renderer );
-    const ssaoPass = new SSAOPass( scene, camera, window.innerWidth, window.innerHeight );
-    ssaoPass.kernelRadius = 16;
-    composer.addPass( ssaoPass );
-    ssaoPass.output = SSAOPass.OUTPUT.Default;
-
-    // 'Default': SSAOPass.OUTPUT.Default,
-    // 'SSAO Only': SSAOPass.OUTPUT.SSAO,
-    // 'SSAO Only + Blur': SSAOPass.OUTPUT.Blur,
-    // 'Beauty': SSAOPass.OUTPUT.Beauty,
-    // 'Depth': SSAOPass.OUTPUT.Depth,
-    // 'Normal': SSAOPass.OUTPUT.Normal
 
 //  ======================================= SCENE =============================
 
@@ -180,7 +164,11 @@ function init() {
 
         scene.add(model);
 
-    }, undefined, 
+    }, function ( xhr ) {
+
+        console.log('Loading Nightclub: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+
+    },
 
     function( error ) { console.error( error ) });
 
@@ -197,6 +185,7 @@ function init() {
                 n.castShadow = true; 
                 n.receiveShadow = true;
                 n.material.transparent = false;
+                n.frustumCulled = false;
                 if(n.material.map) n.material.map.anisotropy = 1; 
               }});
 
@@ -208,12 +197,12 @@ function init() {
         },
         function ( xhr ) {
 
-            //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            console.log('Loading Valk: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
 
         },
         function ( error ) {
 
-            console.log( 'An error happened' );
+            console.error( 'An error happened loading Valk: ' + error );
 
         }
     );
@@ -231,6 +220,7 @@ function init() {
                     n.castShadow = true; 
                     n.receiveShadow = true;
                     n.material.transparent = false;
+                    n.frustumCulled = false;
                     if(n.material.map) n.material.map.anisotropy = 1; 
                   }});
     
@@ -242,12 +232,12 @@ function init() {
             },
             function ( xhr ) {
     
-                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                console.log('Loading Mariarchi: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
             },
             function ( error ) {
     
-                console.log( 'An error happened' );
+                console.error( 'An error happened loading Mariarchi: ' + error);
     
             }
         );
@@ -265,6 +255,7 @@ function init() {
                     n.castShadow = true; 
                     n.receiveShadow = true;
                     n.material.transparent = false;
+                    n.frustumCulled = false;
                     if(n.material.map) n.material.map.anisotropy = 1; 
                     }});
     
@@ -276,12 +267,12 @@ function init() {
             },
             function ( xhr ) {
     
-               // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                console.log('Loading Leal: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
             },
             function ( error ) {
     
-                console.log( 'An error happened' );
+                console.error( 'An error happened loading Leal: ' + error );
     
             }
         );
@@ -300,6 +291,7 @@ function init() {
                     n.castShadow = true; 
                     n.receiveShadow = true;
                     n.material.transparent = false;
+                    n.frustumCulled = false;
                     if(n.material.map) n.material.map.anisotropy = 1; 
                     }});
     
@@ -311,12 +303,12 @@ function init() {
             },
             function ( xhr ) {
     
-                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                console.log('Loading Harry: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
             },
             function ( error ) {
     
-                console.log( 'An error happened' );
+                console.error( 'An error happened loading Harry: ' + error );
     
             }
         );
@@ -335,6 +327,7 @@ function init() {
                     n.castShadow = true; 
                     n.receiveShadow = true;
                     n.material.transparent = false;
+                    n.frustumCulled = false;
                     if(n.material.map) n.material.map.anisotropy = 1; 
                     }});
     
@@ -346,12 +339,12 @@ function init() {
             },
             function ( xhr ) {
     
-                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                console.log('Loading Konstriktor: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
             },
             function ( error ) {
     
-                console.log( 'An error happened' );
+                console.error( 'An error happened loading Konstriktor: ' + error );
     
             }
         );
@@ -370,6 +363,7 @@ function init() {
                     n.castShadow = true; 
                     n.receiveShadow = true;
                     n.material.transparent = false;
+                    n.frustumCulled = false;
                     if(n.material.map) n.material.map.anisotropy = 1; 
                     }});
     
@@ -381,12 +375,12 @@ function init() {
             },
             function ( xhr ) {
     
-                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                console.log('Loading Blu: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
             },
             function ( error ) {
     
-                console.log( 'An error happened' );
+                console.error( 'An error happened loading Blu: ' + error );
     
             }
         );
@@ -405,6 +399,7 @@ function init() {
                     n.castShadow = true; 
                     n.receiveShadow = true;
                     n.material.transparent = false;
+                    n.frustumCulled = false;
                     if(n.material.map) n.material.map.anisotropy = 1; 
                     }});
     
@@ -416,12 +411,12 @@ function init() {
             },
             function ( xhr ) {
     
-                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                console.log('Loading Mister Black: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
             },
             function ( error ) {
     
-                console.log( 'An error happened' );
+                console.error( 'An error happened loading Mister Black: ' + error );
     
             }
         );
@@ -435,7 +430,7 @@ function init() {
 
         delta = clock.getDelta();
         // WAIT ANIMATIONS TO BE ALL READY
-        if (MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer ) {
+        if (MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer && StartAnimations ) {
             MariMixer.update(delta);
             ValkMixer.update(delta);
             LealMixer.update(delta);
@@ -443,13 +438,14 @@ function init() {
             KonstriktorMixer.update(delta);
             BluMixer.update(delta);
             MasterBlackMixer.update(delta);
-        }
+        }                
 
-                
+        light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) ) * 1.2;
+        hemiLight.intensity = 0.05 * light.intensity;
 
-        light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) );
         camera.fov = 50 - light.intensity;
-        camera.updateProjectionMatrix();
+        camera.updateProjectionMatrix();  // Need this after changing camera.fov
+
         if ( light.intensity <= 0.1 ) light.color.setHSL(Math.random() % 255, Math.random() % 255, Math.random() % 255);
 
         // UPDATING THE CAMERA CONTROLS
@@ -458,14 +454,15 @@ function init() {
         //camera.rotation.y += delta/2;
 
         angle += 0.005;
-        camera.position.x = radius * Math.cos(angle);
-        camera.lookAt(radius * Math.cos(angle) / 10,-1,0);
+        camera.position.x = (-0.5) + (radius * Math.cos(angle)) / 1.1;
+        camera.position.z =      4 + radius * Math.sin(angle);
+        camera.lookAt(camera.position.x / 2,1,4);
+        //camera.lookAt(radius * Math.cos(angle) / 2,-1,0);
 
         if( statsEnabled ) stats.update();
 
         // RENDERING FUNCTION LOOP
         renderer.render( scene, camera );         // NORMAL RENDERING
-        //acomposer.render();                          // RENDERING WITH POST PROCESSING
 
     }       
     
@@ -478,10 +475,6 @@ function init() {
         camera.aspect = width / height;
         camera.updateProjectionMatrix();    
         renderer.setSize( width, height );
-        composer.setSize( width, height );
-    
-        //bloomComposer.setSize( width, height );
-        //finalComposer.setSize( width, height );
     
         render();
         
