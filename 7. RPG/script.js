@@ -12,7 +12,7 @@ let btnPressed = false;
 let angle = 0;
 let radius = 3.5;
 
-const statsEnabled = true;
+const statsEnabled = false;
 
 function init() {
 
