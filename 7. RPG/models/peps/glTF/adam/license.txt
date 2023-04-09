@@ -1,0 +1,11 @@
+Model Information:
+* title:	Adam Smasher [GMOD PLAYERMODEL]
+* source:	https://sketchfab.com/3d-models/adam-smasher-gmod-playermodel-51bd63747f2a470a86dfc16111473e4c
+* author:	OSTRiaK (https://sketchfab.com/OSTRiaK)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Adam Smasher [GMOD PLAYERMODEL]" (https://sketchfab.com/3d-models/adam-smasher-gmod-playermodel-51bd63747f2a470a86dfc16111473e4c) by OSTRiaK (https://sketchfab.com/OSTRiaK) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
