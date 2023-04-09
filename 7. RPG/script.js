@@ -137,6 +137,8 @@ function init() {
         HarryMixer, KonstriktorMixer, BluMixer,
         MasterBlackMixer, AnaMixer;
 
+    let MixerReady = false;
+
 
     if( statsEnabled ) {
 
@@ -162,10 +164,10 @@ function init() {
 
     function StartMusic(){ sound.play() }
 
-    const Analyser = new THREE.AudioAnalyser( sound, 32 );
+    //const Analyser = new THREE.AudioAnalyser( sound, 32 );
 
     // GET AVERAGE FREQUENCY
-    const SoundData = Analyser.getAverageFrequency();
+    //const SoundData = Analyser.getAverageFrequency();
 
     // LOADING NIGHTCLUB
     const NightclubLoader = new GLTFLoader(loadingManager);
@@ -185,7 +187,7 @@ function init() {
     }, function ( xhr ) {
 
         //console.log('Loading Nightclub: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-        if(xhr.returnValue)
+        if(xhr.loaded / xhr.total * 100 == 100)
         console.log("Nightclub Loaded.");
     },
 
@@ -216,7 +218,7 @@ function init() {
     },
     function ( xhr ) {
 
-        if(xhr.returnValue)
+        if(xhr.loaded / xhr.total * 100 == 100)
         console.log("Valk Loaded.");
 
     },
@@ -252,7 +254,7 @@ function init() {
         },
         function ( xhr ) {
 
-            if(xhr.returnValue)
+            if(xhr.loaded / xhr.total * 100 == 100)
             console.log("Mariarchi Loaded.");                
 
         },
@@ -269,7 +271,7 @@ function init() {
 
             const model = gltf.scene;
             LealMixer = new THREE.AnimationMixer(gltf).scene;
-            model.position.set(1.65,0,4.75);
+            model.position.set(1.8,0,4.75);
             model.scale.set(1.025,1.05,1);
 
             model.traverse(n => { if ( n.isMesh ) {
@@ -288,7 +290,7 @@ function init() {
         },
         function ( xhr ) {
 
-            if(xhr.returnValue)
+            if(xhr.loaded / xhr.total * 100 == 100)
             console.log("Leal Loaded.");
 
         },
@@ -325,7 +327,7 @@ function init() {
         },
         function ( xhr ) {
 
-            if(xhr.returnValue)
+            if(xhr.loaded / xhr.total * 100 == 100)
             console.log("Harry Loaded.");
 
         },
@@ -363,7 +365,7 @@ function init() {
         },
         function ( xhr ) {
 
-            if(xhr.returnValue)
+            if(xhr.loaded / xhr.total * 100 == 100)
             console.log("Ana Loaded.");
 
         },
@@ -380,7 +382,7 @@ function init() {
 
             const model = gltf.scene;
             KonstriktorMixer = new THREE.AnimationMixer(gltf).scene;
-            model.position.set(0.65,0,2.4);
+            model.position.set(0.25,0,2.1);
             model.rotation.set(0,-0.25,0);
             model.scale.set(1.8,1.3,1.5);
 
@@ -400,7 +402,7 @@ function init() {
         },
         function ( xhr ) {
 
-            if(xhr.returnValue)
+            if(xhr.loaded / xhr.total * 100 == 100)
             console.log("Konstriktor Loaded.");
 
         },
@@ -437,7 +439,7 @@ function init() {
         },
         function ( xhr ) {
 
-            if(xhr.returnValue)
+            if(xhr.loaded / xhr.total * 100 == 100)
             console.log("Blu Loaded.");
 
         },
@@ -474,7 +476,7 @@ function init() {
         },
         function ( xhr ) {
 
-            if(xhr.returnValue)
+            if(xhr.loaded / xhr.total * 100 == 100)
             console.log("Master Black Loaded.");
 
         },
@@ -495,8 +497,12 @@ function init() {
         deltaTime = clock.elapsedTime;
         RandomIntensityTime += 0.001;
 
-        // WAIT ANIMATIONS TO BE ALL READY
-        if (StartAnimations && MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer && AnaMixer ) {
+        if( MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer && AnaMixer ) {
+            MixerReady = true;
+        }
+
+        // WAIT ANIMATIONS TO BE ALL READY AND USER START
+        if (StartAnimations && MixerReady){
             MariMixer.update(delta);
             ValkMixer.update(delta);
             LealMixer.update(delta);
@@ -504,7 +510,7 @@ function init() {
             KonstriktorMixer.update(delta);
             BluMixer.update(delta);
             MasterBlackMixer.update(delta);
-            AnaMixer.update(delta)
+            AnaMixer.update(delta);            
         }                
 
         light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) ) * 1.2;
@@ -513,6 +519,7 @@ function init() {
         camera.fov = 50 - light.intensity;
         camera.updateProjectionMatrix();  // Need this after changing camera.fov
 
+        // RANDOM NIGHCLUB LIGHTS
         if ( light.intensity <= 0.1 ) {
             light.color.setHSL(Math.random() % 255, Math.random() % 255, Math.random() % 255);
         }
@@ -533,8 +540,8 @@ function init() {
         //camera.position.x = (-0.5) + (radius * Math.cos(angle)) / 1.1;
         //camera.position.z =      4 + radius * Math.sin(angle);
         
-        camera.position.x = radius * Math.cos(angle * 1.75);
-        camera.lookAt(camera.position.x * 1.35,1,4);
+        camera.position.x = radius * Math.cos(angle * 1.7);
+        camera.lookAt(camera.position.x * 1.15,1,4);
 
         if( statsEnabled ) stats.update();
 
