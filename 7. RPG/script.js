@@ -7,12 +7,12 @@ import { FirstPersonControls } from "fpssrc";
 let scene, camera, renderer, canvas, controls, clock, model, stats, container;
 let delta = 0;
 let StartAnimations = false;
+let btnPressed = false;
 
 let angle = 0;
 let radius = 3.5;
 
-const statsEnabled = false;
-let btnPressed = false;
+const statsEnabled = true;
 
 function init() {
 
@@ -60,8 +60,9 @@ function init() {
 
     // RENDERER
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    //renderer.setPixelRatio( window.devicePixelRatio ); // GOOD RESOLUTION BUT BAD IN PHONES !!! NOT RECOMMENDED
-    renderer.setPixelRatio( window.devicePixelRatio * 0.25 );
+    //renderer.setPixelRatio( window.devicePixelRatio ); // GOOD RESOLUTION BUT BAD IN PHONES !!! NOT RECOMMENDED 
+    console.log(`window.devicePixelRatio = ` + window.devicePixelRatio)
+    renderer.setPixelRatio( 0.8 );
     renderer.setSize( window.innerWidth, window.innerHeight );   
     renderer.shadowMap.enabled = true;  
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -82,8 +83,9 @@ function init() {
     const near   = 0.01;
     const far    = 500;
     camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    //camera.position.set(0, 2.5, 8.5);
     camera.position.set(0, 2.2, 9);
+
+    // CONTROLS
     controls = new FirstPersonControls( camera, renderer.domElement );
     controls.movementSpeed = 10;
     controls.lookSpeed = 0.25;
@@ -166,8 +168,9 @@ function init() {
 
     }, function ( xhr ) {
 
-        console.log('Loading Nightclub: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-
+        //console.log('Loading Nightclub: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        if(xhr.returnValue)
+        console.log("Nightclub Loaded.");
     },
 
     function( error ) { console.error( error ) });
@@ -197,7 +200,8 @@ function init() {
         },
         function ( xhr ) {
 
-            console.log('Loading Valk: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            if(xhr.returnValue)
+            console.log("Valk Loaded.");
 
         },
         function ( error ) {
@@ -232,7 +236,8 @@ function init() {
             },
             function ( xhr ) {
     
-                console.log('Loading Mariarchi: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                if(xhr.returnValue)
+                console.log("Mariarchi Loaded.");                
     
             },
             function ( error ) {
@@ -267,7 +272,8 @@ function init() {
             },
             function ( xhr ) {
     
-                console.log('Loading Leal: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                if(xhr.returnValue)
+                console.log("Leal Loaded.");
     
             },
             function ( error ) {
@@ -303,7 +309,8 @@ function init() {
             },
             function ( xhr ) {
     
-                console.log('Loading Harry: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                if(xhr.returnValue)
+                console.log("Harry Loaded.");
     
             },
             function ( error ) {
@@ -338,8 +345,9 @@ function init() {
                 KonstriktorMixer.clipAction(animations[0]).play();
             },
             function ( xhr ) {
-    
-                console.log('Loading Konstriktor: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+
+                if(xhr.returnValue)
+                console.log("Konstriktor Loaded.");
     
             },
             function ( error ) {
@@ -374,8 +382,9 @@ function init() {
                 BluMixer.clipAction(animations[0]).play();
             },
             function ( xhr ) {
-    
-                console.log('Loading Blu: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+
+                if(xhr.returnValue)
+                console.log("Blu Loaded.");
     
             },
             function ( error ) {
@@ -411,7 +420,8 @@ function init() {
             },
             function ( xhr ) {
     
-                console.log('Loading Mister Black: ' + ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+                if(xhr.returnValue)
+                console.log("Master Black Loaded.");
     
             },
             function ( error ) {
