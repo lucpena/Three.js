@@ -65,7 +65,7 @@ function init() {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     //renderer.setPixelRatio( window.devicePixelRatio ); // GOOD RESOLUTION BUT BAD IN PHONES !!! NOT RECOMMENDED 
     console.log(`window.devicePixelRatio = ` + window.devicePixelRatio)
-    renderer.setPixelRatio( 0.8 );
+    renderer.setPixelRatio( 0.75 );
     renderer.setSize( window.innerWidth, window.innerHeight );   
     renderer.shadowMap.enabled = true;  
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
