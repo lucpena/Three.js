@@ -532,7 +532,7 @@ function init() {
         //camera.position.x = (-0.5) + (radius * Math.cos(angle)) / 1.1;
         //camera.position.z =      4 + radius * Math.sin(angle);
         
-        camera.position.x = radius * Math.cos(angle);
+        camera.position.x = radius * Math.cos(angle * 1.75);
         camera.lookAt(camera.position.x * 1.35,1,4);
 
         if( statsEnabled ) stats.update();
