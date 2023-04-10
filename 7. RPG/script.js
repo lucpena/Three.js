@@ -13,7 +13,7 @@ let StartAnimations = false;
 let btnPressed = false;
 
 let angle = 0;
-let radius = 1.5;
+let radius = 1.4;
 
 const statsEnabled = false;
 
@@ -575,13 +575,13 @@ function init() {
         //controls.update( delta );    
         //camera.rotation.y += delta/2;
 
-        angle += 0.005;
+        angle += 0.008;
 
         //camera.position.x = (-0.5) + (radius * Math.cos(angle)) / 1.1;
         //camera.position.z =      4 + radius * Math.sin(angle);
         
-        camera.position.x = radius * Math.cos(angle * 1.25);
-        camera.lookAt(camera.position.x * 1.75, 0.75, 4);
+        camera.position.x = radius * Math.cos(angle);
+        camera.lookAt(camera.position.x * 1.75, 1.1, 4);
 
         if( statsEnabled ) stats.update();
 
