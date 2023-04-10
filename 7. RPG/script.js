@@ -70,8 +70,7 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight );   
     renderer.shadowMap.enabled = true;  
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 2;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;        
+    renderer.toneMappingExposure = 2;    
     renderer.outputEncoding = THREE.sRGBEncoding;
 
     container.appendChild( renderer.domElement );
@@ -500,9 +499,9 @@ function init() {
             model.scale.set(1.25,1.25,1.25);
 
             model.traverse(n => { if ( n.isMesh ) {
-                n.castShadow = true; 
-                n.receiveShadow = true;
-                n.material.transparent = false;
+                //n.castShadow = true; 
+                //n.receiveShadow = true;
+                //n.material.transparent = false;
                 n.frustumCulled = false;
                 if(n.material.map) n.material.map.anisotropy = 1; 
                 }});
