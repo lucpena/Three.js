@@ -13,7 +13,7 @@ let StartAnimations = false;
 let btnPressed = false;
 
 let angle = 0;
-let radius = 1.75;
+let radius = 1.5;
 
 const statsEnabled = false;
 
@@ -135,7 +135,7 @@ function init() {
     // FOR ANIMATIONS
     let MariMixer, ValkMixer, LealMixer, 
         HarryMixer, KonstriktorMixer, BluMixer,
-        MasterBlackMixer, AnaMixer;
+        MasterBlackMixer, AnaMixer, SmasherMixer;
 
     let MixerReady = false;
 
@@ -231,12 +231,14 @@ function init() {
 
     // LOADING MARIARCHI...
     const MariLoader = new GLTFLoader(loadingManager);
-    MariLoader.load('./models/peps/OBJ/mariarchi.glb', ( gltf ) => {
+    let modfier = 5;
+    MariLoader.load('./models/peps/OBJ/mariarchi2.glb', ( gltf ) => {
 
             const model = gltf.scene;
             MariMixer = new THREE.AnimationMixer(gltf).scene;
-            model.position.set(0,0,5);
-            model.scale.set(1.03,1.07,1);
+            model.position.set(0.18,0,5);
+            model.rotation.set(0,-0.5,0);
+            model.scale.set(0.28, 0.32, 0.28);
 
             model.traverse(n => { if ( n.isMesh ) {
                 n.castShadow = true; 
@@ -486,6 +488,43 @@ function init() {
 
         }
     );
+
+    // LOADING ADAM SMASHER...
+    const SmasherLoader = new GLTFLoader(loadingManager);
+    SmasherLoader.load('./models/peps/OBJ/adam.glb', ( gltf ) => {
+
+            const model = gltf.scene;
+            SmasherMixer = new THREE.AnimationMixer(gltf).scene;
+            model.position.set(0.25,1.45,-8);
+            model.rotation.set(0,0,0);
+            model.scale.set(1.25,1.25,1.25);
+
+            model.traverse(n => { if ( n.isMesh ) {
+                n.castShadow = true; 
+                n.receiveShadow = true;
+                n.material.transparent = false;
+                n.frustumCulled = false;
+                if(n.material.map) n.material.map.anisotropy = 1; 
+                }});
+
+            scene.add( model );
+
+            const animations = gltf.animations;              
+            SmasherMixer = new THREE.AnimationMixer(model);
+            SmasherMixer.clipAction(animations[0]).play();
+        },
+        function ( xhr ) {
+
+            if(xhr.loaded / xhr.total * 100 == 100)
+            console.log("Adam Smasher Loaded.");
+
+        },
+        function ( error ) {
+
+            console.error( 'An error happened loading Mister Black: ' + error );
+
+        }
+    );
         
 
     // RENDERING THE SCENE
@@ -497,7 +536,7 @@ function init() {
         deltaTime = clock.elapsedTime;
         RandomIntensityTime += 0.001;
 
-        if( MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer && AnaMixer ) {
+        if( MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer && AnaMixer && SmasherMixer ) {
             MixerReady = true;
         }
 
@@ -511,6 +550,7 @@ function init() {
             BluMixer.update(delta);
             MasterBlackMixer.update(delta);
             AnaMixer.update(delta);            
+            SmasherMixer.update(delta);            
         }                
 
         light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) ) * 1.2;
@@ -526,7 +566,7 @@ function init() {
 
         // GIVE RANDOM LIGHT AND INTENSITY TO ANA'S TABLET
         if(RandomIntensityTime >= Math.random() % 10 ){
-            tabletLight.intensity =  2.5 + Math.abs( Math.random() % 5 );
+            tabletLight.intensity =  4 + Math.abs( Math.random() % 5 );
             tabletLight.color.setHSL(Math.random() % 200, Math.random() % 200, Math.random() % 200);
             RandomIntensityTime = 0;
         }
@@ -540,8 +580,8 @@ function init() {
         //camera.position.x = (-0.5) + (radius * Math.cos(angle)) / 1.1;
         //camera.position.z =      4 + radius * Math.sin(angle);
         
-        camera.position.x = radius * Math.cos(angle * 1.7);
-        camera.lookAt(camera.position.x * 1.15,1,4);
+        camera.position.x = radius * Math.cos(angle * 1.25);
+        camera.lookAt(camera.position.x * 1.75, 0.75, 4);
 
         if( statsEnabled ) stats.update();
 
