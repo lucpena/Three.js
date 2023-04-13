@@ -66,7 +66,6 @@ function init() {
     //renderer.setPixelRatio( window.devicePixelRatio ); // GOOD RESOLUTION BUT BAD IN PHONES !!! NOT RECOMMENDED 
     console.log(`window.devicePixelRatio = ` + window.devicePixelRatio)
     renderer.setPixelRatio( 0.6 );
-
     renderer.setSize( window.innerWidth, window.innerHeight );   
     renderer.shadowMap.enabled = true;  
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -109,15 +108,15 @@ function init() {
 
     // LIGHT SHADOWS
     light.castShadow = true;
-    const d = 15;
+    const d = 25;
     light.shadow.camera.top = d;
     light.shadow.camera.bottom = - d;
     light.shadow.camera.left = - d;
     light.shadow.camera.right = d;
     light.shadow.camera.near = 0.1;
-    light.shadow.camera.far = 200    
-    light.shadow.mapSize.width = 4096;
-    light.shadow.mapSize.height = 4096;
+    light.shadow.camera.far = 200;    
+    light.shadow.mapSize.width =  1024 * 2;
+    light.shadow.mapSize.height = 1024 * 2;
 
     // ANA TABLET LIGHT
     const tabletLight = new THREE.RectAreaLight(0X00FF33, 5, 0.3, 0.2);
