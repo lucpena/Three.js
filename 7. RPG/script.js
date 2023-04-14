@@ -180,17 +180,17 @@ function init() {
 //  ======================================= SCENE =============================
 
     let smokeTexture = new THREE.TextureLoader().load('./tex/smoke/whitePuff22.png');
-    let smokeGeometry = new THREE.PlaneGeometry(1.5, 1.5);
-    let smokeMaterial = new THREE.MeshLambertMaterial({map: smokeTexture, opacity: 0.08, transparent: true});
-    smokeMaterial.reflectivity = 0;
+    let smokeGeometry = new THREE.PlaneGeometry(5, 5);
+    let smokeMaterial = new THREE.MeshLambertMaterial({map: smokeTexture, opacity: 0.2, transparent: true, bumpScale: 0});
+    //smokeMaterial.reflectivity = 0;
     let smokeParticles = [];
 
-    for( let i = 0; i < 150; i++ ){
+    for( let i = 0; i < 25; i++ ){
         let smokeElement = new THREE.Mesh(smokeGeometry, smokeMaterial);
         //smokeElement.scale.set(2, 2, 2);
         smokeElement.position.set(-3.5 + Math.random() * 7, 0.5, -4 + Math.random() * 12);
         smokeElement.rotation.z = Math.random() * 360;
-        smokeElement.rotation.x = -1.1; 
+        smokeElement.rotation.x = -Math.PI/2.5; 
 
         scene.add(smokeElement);
         smokeParticles.push(smokeElement);
@@ -621,7 +621,7 @@ function init() {
 
             // SMOKE PARTICLES
             for( let i = 0; i < smokeParticles.length; i++) {
-                //smokeParticles[i].rotation.x = camera.position.x;
+                smokeParticles[i].lookAt = camera.position.x;
                 smokeParticles[i].rotation.z += 0.0025;
                 smokeParticles[i].position.z += (smokeParticles[i].position.z >= 8 ? -11 : 0.008);
             }
