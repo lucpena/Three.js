@@ -7,7 +7,7 @@ import { RectAreaLightHelper } from 'RectAreaLightHelperSRC';
 
 
 let scene, camera, renderer, canvas, controls, clock, model, stats, container;
-let delta, deltaTime = 0;
+let delta, deltaSmoke, deltaTime = 0;
 let RandomIntensityTime = 0;
 let StartAnimations = false;
 let btnPressed = false;
@@ -15,7 +15,7 @@ let btnPressed = false;
 let angle = 0;
 let radius = 1.4;
 
-const statsEnabled = false;
+const statsEnabled = true;
 
 function init() {
 
@@ -71,6 +71,7 @@ function init() {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 2;    
     renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.useLegacyLights = true;
 
     container.appendChild( renderer.domElement );
 
@@ -95,28 +96,76 @@ function init() {
 
     // ----- LIGHTS
     // AMBIENT LIGHT
-    const hemiLight = new THREE.HemisphereLight( 0xFF00FF, 0xFF00FF, 0.05 );
-    hemiLight.color.setHSL( 1, 0, 1 );
-    //hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+    const hemiLight = new THREE.HemisphereLight( 0xFF00FF, 0x000000, 0.01 );
+    //hemiLight.color.setHSL( 1, 0, 1 );
+    //hemiLight.groundColor.setHSL( 1, 0, 1 );
     scene.add( hemiLight );
 
     // DIRECTIONAL LIGHT
     const colorLight = 0xff00ff;
-    const intensity = 0.1;
+    const intensity = 0.2;
     let light = new THREE.DirectionalLight(colorLight, intensity);
+    light.position.y = 4;
     scene.add( light );
 
     // LIGHT SHADOWS
     light.castShadow = true;
-    const d = 25;
+    const d = 10;
     light.shadow.camera.top = d;
     light.shadow.camera.bottom = - d;
     light.shadow.camera.left = - d;
     light.shadow.camera.right = d;
     light.shadow.camera.near = 0.1;
     light.shadow.camera.far = 200;    
-    light.shadow.mapSize.width =  1024 * 2;
-    light.shadow.mapSize.height = 1024 * 2;
+    light.shadow.mapSize.width =  1024;
+    light.shadow.mapSize.height = 1024;
+
+    // SPOT LIGHTS
+    let spotLightColor = 0xFFFF00;
+    let spotLightIntensity = 0.9;
+    let spotLightDistance = 25;
+    let spotLightAngle = Math.PI/20;
+    let spotLightPenumbra = 0.1;
+    let spotLightDecay = 0;
+    let spotLight = new THREE.SpotLight(spotLightColor,spotLightIntensity, spotLightDistance, spotLightAngle, spotLightPenumbra, spotLightDecay);
+    spotLight.position.set(-4, 3.5, 11);
+    spotLight.lookAt(0, 0, 0);
+    // spotLight.map = new THREE.TextureLoader( url );
+    spotLight.castShadow = true;
+
+    // SPOT LIGHT SHADOWS
+    spotLight.shadow.mapSize.width = 512;
+    spotLight.shadow.mapSize.height = 512;
+    spotLight.shadow.camera.near = 0.1;
+    spotLight.shadow.camera.far = 400;
+    spotLight.shadow.camera.fov = 30;
+
+    scene.add( spotLight );
+    scene.add( spotLight.target );
+
+    // SPOT LIGHT
+    spotLightColor = 0x0000FF;
+    spotLightIntensity = 0.9;
+    spotLightDistance = 25;
+    spotLightAngle = Math.PI/20;
+    spotLightPenumbra = 0.1;
+    spotLightDecay = 0;
+    let spotLight2 = new THREE.SpotLight(spotLightColor,spotLightIntensity, spotLightDistance, spotLightAngle, spotLightPenumbra, spotLightDecay);
+    spotLight2.position.set(4, 3.5, 11);
+    spotLight2.lookAt(0, 0, 0);
+    // spotLight2.map = new THREE.TextureLoader( url );
+    spotLight2.castShadow = true;
+
+    // SPOT LIGHT SHADOWS
+    spotLight2.shadow.mapSize.width = 512;
+    spotLight2.shadow.mapSize.height = 512;
+    spotLight2.shadow.camera.near = 0.1;
+    spotLight2.shadow.camera.far = 400;
+    spotLight2.shadow.camera.fov = 30;
+
+    scene.add( spotLight2 );
+    scene.add( spotLight2.target );
+    
 
     // ANA TABLET LIGHT
     const tabletLight = new THREE.RectAreaLight(0X00FF33, 5, 0.3, 0.2);
@@ -129,6 +178,23 @@ function init() {
 
 
 //  ======================================= SCENE =============================
+
+    let smokeTexture = new THREE.TextureLoader().load('./tex/smoke/whitePuff22.png');
+    let smokeGeometry = new THREE.PlaneGeometry(1.5, 1.5);
+    let smokeMaterial = new THREE.MeshLambertMaterial({map: smokeTexture, opacity: 0.08, transparent: true});
+    smokeMaterial.reflectivity = 0;
+    let smokeParticles = [];
+
+    for( let i = 0; i < 150; i++ ){
+        let smokeElement = new THREE.Mesh(smokeGeometry, smokeMaterial);
+        //smokeElement.scale.set(2, 2, 2);
+        smokeElement.position.set(-3.5 + Math.random() * 7, 0.5, -4 + Math.random() * 12);
+        smokeElement.rotation.z = Math.random() * 360;
+        smokeElement.rotation.x = -1.1; 
+
+        scene.add(smokeElement);
+        smokeParticles.push(smokeElement);
+    }
 
     // FOR ANIMATIONS
     let MariMixer, ValkMixer, LealMixer, 
@@ -229,7 +295,6 @@ function init() {
 
     // LOADING MARIARCHI...
     const MariLoader = new GLTFLoader(loadingManager);
-    let modfier = 5;
     MariLoader.load('./models/peps/OBJ/mariarchi2.glb', ( gltf ) => {
 
             const model = gltf.scene;
@@ -518,75 +583,87 @@ function init() {
 
         },
         function ( error ) {
-
+            
             console.error( 'An error happened loading Mister Black: ' + error );
-
+            
         }
-    );
+        );
         
-
-    // RENDERING THE SCENE
-    function render(time) {
-
-        requestAnimationFrame( render );
-
-        delta = clock.getDelta();
-        deltaTime = clock.elapsedTime;
-        RandomIntensityTime += 0.001;
-
-        if( MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer && AnaMixer && SmasherMixer ) {
-            MixerReady = true;
-        }
-
-        // WAIT ANIMATIONS TO BE ALL READY AND USER START
-        if (StartAnimations && MixerReady){
-            MariMixer.update(delta);
-            ValkMixer.update(delta);
-            LealMixer.update(delta);
-            HarryMixer.update(delta);
-            KonstriktorMixer.update(delta);
-            BluMixer.update(delta);
-            MasterBlackMixer.update(delta);
-            AnaMixer.update(delta);            
-            SmasherMixer.update(delta);            
-        }                
-
-        light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) ) * 1.2;
-        hemiLight.intensity = 0.05 * light.intensity;
-
-        camera.fov = 50 - light.intensity;
-        camera.updateProjectionMatrix();  // Need this after changing camera.fov
-
-        // RANDOM NIGHCLUB LIGHTS
-        if ( light.intensity <= 0.1 ) {
-            light.color.setHSL(Math.random() % 255, Math.random() % 255, Math.random() % 255);
-        }
-
-        // GIVE RANDOM LIGHT AND INTENSITY TO ANA'S TABLET
-        if(RandomIntensityTime >= Math.random() % 10 ){
-            tabletLight.intensity =  4 + Math.abs( Math.random() % 5 );
-            tabletLight.color.setHSL(Math.random() % 200, Math.random() % 200, Math.random() % 200);
-            RandomIntensityTime = 0;
-        }
-
-        // UPDATING THE CAMERA CONTROLS
-        //controls.update( delta );    
-        //camera.rotation.y += delta/2;
-
-        angle += 0.008;
-
-        //camera.position.x = (-0.5) + (radius * Math.cos(angle)) / 1.1;
-        //camera.position.z =      4 + radius * Math.sin(angle);
         
-        camera.position.x = radius * Math.cos(angle);
-        camera.lookAt(camera.position.x * 1.75, 1.1, 4);
+        // RENDERING THE SCENE
+        function render() {
+            
+            requestAnimationFrame( render );
+            
+            delta = clock.getDelta();
+            deltaTime = clock.elapsedTime;
+            angle += 0.008;
+            RandomIntensityTime += 0.001;
 
-        if( statsEnabled ) stats.update();
+           if(angle > Math.PI * 2) angle = 0;
+            
+            if( MariMixer && ValkMixer && LealMixer && HarryMixer && KonstriktorMixer && BluMixer && MasterBlackMixer && AnaMixer && SmasherMixer ) {
+                MixerReady = true;
+            }
 
-        // RENDERING FUNCTION LOOP
-        renderer.render( scene, camera );         // NORMAL RENDERING
+            // WAIT ANIMATIONS TO BE ALL READY AND USER START
+            if (StartAnimations && MixerReady){
+                MariMixer.update(delta);
+                ValkMixer.update(delta);
+                LealMixer.update(delta);
+                HarryMixer.update(delta);
+                KonstriktorMixer.update(delta);
+                BluMixer.update(delta);
+                MasterBlackMixer.update(delta);
+                AnaMixer.update(delta);            
+                SmasherMixer.update(delta);            
+            }                
 
-    }       
+            // SMOKE PARTICLES
+            for( let i = 0; i < smokeParticles.length; i++) {
+                //smokeParticles[i].rotation.x = camera.position.x;
+                smokeParticles[i].rotation.z += 0.0025;
+                smokeParticles[i].position.z += (smokeParticles[i].position.z >= 8 ? -11 : 0.008);
+            }
+
+            // LIGHTS ANIMATION
+            light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) * 0.5 );
+            hemiLight.intensity = 0.01 * light.intensity;
+
+            camera.fov = 50 - light.intensity;
+            camera.updateProjectionMatrix();  // Need this after changing camera.fov
+
+            // RANDOM NIGHCLUB LIGHTS
+            if ( light.intensity <= 0.1 ) {
+                light.color.setHSL(Math.random() % 255, Math.random() % 255, Math.random() % 255);
+            }
+
+            // GIVE RANDOM LIGHT AND INTENSITY TO ANA'S TABLET
+            if(RandomIntensityTime >= Math.random() % 10 ){
+                tabletLight.intensity =  4 + Math.abs( Math.random() % 5 );
+                tabletLight.color.setHSL(Math.random() % 200, Math.random() % 200, Math.random() % 200);
+                RandomIntensityTime = 0;
+            }
+
+            // SPOT LIGHT MOVEMENT
+            spotLight.target.position.set( Math.sin(angle * 6) * 4,  Math.cos(angle * 2) * 4, Math.cos(angle * 2));
+            spotLight2.target.position.set( Math.cos(angle * 6) * 4,  Math.sin(angle * 2) * 4, Math.cos(angle * 2));
+
+            // UPDATING THE CAMERA CONTROLS
+            //controls.update( delta );    
+            //camera.rotation.y += delta/2;
+            //camera.position.x = (-0.5) + (radius * Math.cos(angle)) / 1.1;
+            //camera.position.z =      4 + radius * Math.sin(angle);
+            
+            camera.position.x = radius * Math.cos(angle);
+            camera.lookAt(camera.position.x * 1.75, 1.1, 4);
+
+            if( statsEnabled ) stats.update();
+
+            // RENDERING FUNCTION LOOP
+            renderer.render( scene, camera );         // NORMAL RENDERING
+
+        }       
     
     // CHECK FOR CHANGES ON WINDOW SIZE
     window.onresize = function () {
@@ -597,8 +674,6 @@ function init() {
         camera.aspect = width / height;
         camera.updateProjectionMatrix();    
         renderer.setSize( width, height );
-    
-        render();
         
     };
     
