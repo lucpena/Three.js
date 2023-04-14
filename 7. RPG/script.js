@@ -7,10 +7,12 @@ import { RectAreaLightHelper } from 'RectAreaLightHelperSRC';
 
 
 let scene, camera, renderer, canvas, controls, clock, model, stats, container;
-let delta, deltaSmoke, deltaTime = 0;
+let delta = 0;
 let RandomIntensityTime = 0;
 let StartAnimations = false;
 let btnPressed = false;
+let hue, saturation, lightness = 0;
+let cameraFOV = 50;
 
 let angle = 0;
 let radius = 1.4;
@@ -64,8 +66,7 @@ function init() {
     // RENDERER
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     //renderer.setPixelRatio( window.devicePixelRatio ); // GOOD RESOLUTION BUT BAD IN PHONES !!! NOT RECOMMENDED 
-    console.log(`window.devicePixelRatio = ` + window.devicePixelRatio)
-    renderer.setPixelRatio( 0.6 );
+    renderer.setPixelRatio( 0.5 );
     renderer.setSize( window.innerWidth, window.innerHeight );   
     renderer.shadowMap.enabled = true;  
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -81,11 +82,10 @@ function init() {
     scene.fog = new THREE.Fog( scene.background, 1, 25 );
 
     // CAMERA
-    const fov    = 50;
     const aspect = window.innerWidth / window.innerHeight;
     const near   = 0.01;
     const far    = 500;
-    camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera = new THREE.PerspectiveCamera(cameraFOV, aspect, near, far);
     camera.position.set(0, 2.5, 9);
     //camera.position.set(-2.5,1.5,4.2);  // ANA
 
@@ -97,8 +97,6 @@ function init() {
     // ----- LIGHTS
     // AMBIENT LIGHT
     const hemiLight = new THREE.HemisphereLight( 0xFF00FF, 0x000000, 0.01 );
-    //hemiLight.color.setHSL( 1, 0, 1 );
-    //hemiLight.groundColor.setHSL( 1, 0, 1 );
     scene.add( hemiLight );
 
     // DIRECTIONAL LIGHT
@@ -116,11 +114,11 @@ function init() {
     light.shadow.camera.left = - d;
     light.shadow.camera.right = d;
     light.shadow.camera.near = 0.1;
-    light.shadow.camera.far = 200;    
+    light.shadow.camera.far = 50;    
     light.shadow.mapSize.width =  1024;
     light.shadow.mapSize.height = 1024;
 
-    // SPOT LIGHTS
+    // SPOT LIGHT 1
     let spotLightColor = 0xFFFF00;
     let spotLightIntensity = 0.9;
     let spotLightDistance = 25;
@@ -130,20 +128,19 @@ function init() {
     let spotLight = new THREE.SpotLight(spotLightColor,spotLightIntensity, spotLightDistance, spotLightAngle, spotLightPenumbra, spotLightDecay);
     spotLight.position.set(-4, 3.5, 11);
     spotLight.lookAt(0, 0, 0);
-    // spotLight.map = new THREE.TextureLoader( url );
     spotLight.castShadow = true;
 
     // SPOT LIGHT SHADOWS
     spotLight.shadow.mapSize.width = 512;
     spotLight.shadow.mapSize.height = 512;
     spotLight.shadow.camera.near = 0.1;
-    spotLight.shadow.camera.far = 400;
+    spotLight.shadow.camera.far = 100;
     spotLight.shadow.camera.fov = 30;
 
     scene.add( spotLight );
     scene.add( spotLight.target );
 
-    // SPOT LIGHT
+    // SPOT LIGHT 2
     spotLightColor = 0x0000FF;
     spotLightIntensity = 0.9;
     spotLightDistance = 25;
@@ -153,19 +150,17 @@ function init() {
     let spotLight2 = new THREE.SpotLight(spotLightColor,spotLightIntensity, spotLightDistance, spotLightAngle, spotLightPenumbra, spotLightDecay);
     spotLight2.position.set(4, 3.5, 11);
     spotLight2.lookAt(0, 0, 0);
-    // spotLight2.map = new THREE.TextureLoader( url );
     spotLight2.castShadow = true;
 
-    // SPOT LIGHT SHADOWS
+    // SPOT LIGHT 2 SHADOWS
     spotLight2.shadow.mapSize.width = 512;
     spotLight2.shadow.mapSize.height = 512;
     spotLight2.shadow.camera.near = 0.1;
-    spotLight2.shadow.camera.far = 400;
+    spotLight2.shadow.camera.far = 100;
     spotLight2.shadow.camera.fov = 30;
 
     scene.add( spotLight2 );
-    scene.add( spotLight2.target );
-    
+    scene.add( spotLight2.target );    
 
     // ANA TABLET LIGHT
     const tabletLight = new THREE.RectAreaLight(0X00FF33, 5, 0.3, 0.2);
@@ -175,17 +170,15 @@ function init() {
     //tabletLight.add( tabletLightHelper );
     scene.add( tabletLight );
 
-
-
 //  ======================================= SCENE =============================
 
     let smokeTexture = new THREE.TextureLoader().load('./tex/smoke/whitePuff22.png');
     let smokeGeometry = new THREE.PlaneGeometry(5, 5);
-    let smokeMaterial = new THREE.MeshLambertMaterial({map: smokeTexture, opacity: 0.2, transparent: true, bumpScale: 0});
+    let smokeMaterial = new THREE.MeshLambertMaterial({map: smokeTexture, opacity: 0.3, transparent: true});
     //smokeMaterial.reflectivity = 0;
     let smokeParticles = [];
 
-    for( let i = 0; i < 25; i++ ){
+    for( let i = 0; i < 15; i++ ){
         let smokeElement = new THREE.Mesh(smokeGeometry, smokeMaterial);
         //smokeElement.scale.set(2, 2, 2);
         smokeElement.position.set(-3.5 + Math.random() * 7, 0.5, -4 + Math.random() * 12);
@@ -587,7 +580,7 @@ function init() {
             console.error( 'An error happened loading Mister Black: ' + error );
             
         }
-        );
+    );
         
         
         // RENDERING THE SCENE
@@ -596,7 +589,6 @@ function init() {
             requestAnimationFrame( render );
             
             delta = clock.getDelta();
-            deltaTime = clock.elapsedTime;
             angle += 0.008;
             RandomIntensityTime += 0.001;
 
@@ -626,18 +618,21 @@ function init() {
                 smokeParticles[i].position.z += (smokeParticles[i].position.z >= 8 ? -11 : 0.008);
             }
 
+            
             // LIGHTS ANIMATION
-            light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) * 0.5 );
-            hemiLight.intensity = 0.01 * light.intensity;
+            light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) * 0.45 );
+            hemiLight.intensity = light.intensity / 4;
+            
 
-            camera.fov = 50 - light.intensity;
-            camera.updateProjectionMatrix();  // Need this after changing camera.fov
-
+            hue = Math.random();
+            saturation = 0.75;
+            lightness = 0.5;
             // RANDOM NIGHCLUB LIGHTS
             if ( light.intensity <= 0.1 ) {
-                light.color.setHSL(Math.random() % 255, Math.random() % 255, Math.random() % 255);
+                light.color.setHSL(hue, saturation, lightness);
+                hemiLight.color.setHSL(hue, saturation, lightness);
             }
-
+            
             // GIVE RANDOM LIGHT AND INTENSITY TO ANA'S TABLET
             if(RandomIntensityTime >= Math.random() % 10 ){
                 tabletLight.intensity =  4 + Math.abs( Math.random() % 5 );
@@ -649,6 +644,31 @@ function init() {
             spotLight.target.position.set( Math.sin(angle * 6) * 4,  Math.cos(angle * 2) * 4, Math.cos(angle * 2));
             spotLight2.target.position.set( Math.cos(angle * 6) * 4,  Math.sin(angle * 2) * 4, Math.cos(angle * 2));
 
+            // CAMERA ANIMATIONS
+
+            // document.addEventListener("click", event => {
+            
+            //     //console.log(event);
+            //     event.preventDefault();
+
+            //     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+            //     mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+            
+            //     raycaster.setFromCamera( mouse, camera );
+            
+            //     var intersects = raycaster.intersectObjects( scene.children, true );
+            
+            //     if ( intersects.length > 0 ) {
+            //         let object = intersects[0].object;
+            //         console.log( 'Intersection:', intersects[ 0 ] );
+            //     }
+        
+            // });
+
+            camera.fov = 40 - light.intensity;
+            camera.updateProjectionMatrix();  // Need this after changing            
+
+            
             // UPDATING THE CAMERA CONTROLS
             //controls.update( delta );    
             //camera.rotation.y += delta/2;
