@@ -84,6 +84,10 @@ function init() {
 
     // GETTING MOUSE MOVEMENT
     document.addEventListener( 'mousemove', onDocumentMouseMove );
+    
+    window.addEventListener('touchstart', touchHandler, false);
+    window.addEventListener('touchmove', touchHandler, false);
+    window.addEventListener('touchend', touchHandler, false);
 
     // CANVAS
     canvas = document.querySelector("#canvas");
@@ -603,14 +607,13 @@ function init() {
     
     // CHECK FOR CHANGES ON WINDOW SIZE
     window.onresize = function () {
-
         const width = window.innerWidth;
         const height = window.innerHeight;
-    
+
         camera.aspect = width / height;
         camera.updateProjectionMatrix();    
         renderer.setSize( width, height );
-        
+    
     };
 }
 
@@ -619,6 +622,22 @@ function onDocumentMouseMove( event ) {
 
     mouseX = ( event.clientX - windowHalfX ) / 2;
     mouseY = ( event.clientY - windowHalfY ) / 2;
+
+}
+
+function touchHandler(event){
+    event.preventDefault();
+
+     if (event.touches && event.touches[0]) {
+      mouseX = event.touches[0].clientX;
+      mouseY = event.touches[0].clientY;
+    } else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
+        mouseX = event.originalEvent.changedTouches[0].clientX;
+        mouseY = event.originalEvent.changedTouches[0].clientY;
+    } else if (event.clientX && event.clientY) {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+    }
 
 }
 
