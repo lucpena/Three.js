@@ -630,21 +630,17 @@ function onDocumentMouseMove( event ) {
 
 function touchHandler(event) {
     if(initializated) {
-        touched = true;
         event.preventDefault();
-
         if (event.touches && event.touches[0]) {
-        mouseX = (event.touches[0].clientX - windowHalfX / 2) / 4;
-        mouseY = event.touches[0].clientY;
+        mouseX = -0.5 + (event.touches[0].clientX - windowHalfX / 2) / 2;
+        mouseY = -0.5 + event.touches[0].clientY;
         } else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
-            mouseX = (event.originalEvent.changedTouches[0].clientX - windowHalfX / 2) / 4;
-            mouseY = event.originalEvent.changedTouches[0].clientY;
+            mouseX = -0.5 + (event.originalEvent.changedTouches[0].clientX - windowHalfX / 2) / 2;
+            mouseY = -0.5 + event.originalEvent.changedTouches[0].clientY;
         } else if (event.clientX && event.clientY) {
-            mouseX = (event.clientX - windowHalfX / 2) / 4;
-            mouseY = event.clientY;
+            mouseX = -0.5 + (event.clientX - windowHalfX / 2) / 2;
+            mouseY = -0.5 + event.clientY;
         }
-
-        touched = false;
     }
 }
 
