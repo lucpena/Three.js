@@ -13,6 +13,7 @@ let StartAnimations = false;
 let btnPressed = false;
 let hue, saturation, lightness = 0;
 let cameraFOV = 50;
+let initializated = false;
 
 // ANGLE STUFF
 let angle = 0;
@@ -62,6 +63,7 @@ function init() {
             loadingScreen.classList.add("fade-out");
             loadingScreen.addEventListener("transitionend", onTransitionEnd);
             StartMusic();   
+            initializated = !initializated;
         }
         
     }
@@ -625,20 +627,21 @@ function onDocumentMouseMove( event ) {
 
 }
 
-function touchHandler(event){
-    event.preventDefault();
+function touchHandler(event) {
+    if(initializated) {
+        event.preventDefault();
 
-     if (event.touches && event.touches[0]) {
-      mouseX = event.touches[0].clientX;
-      mouseY = event.touches[0].clientY;
-    } else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
-        mouseX = event.originalEvent.changedTouches[0].clientX;
-        mouseY = event.originalEvent.changedTouches[0].clientY;
-    } else if (event.clientX && event.clientY) {
-        mouseX = event.clientX;
-        mouseY = event.clientY;
+        if (event.touches && event.touches[0]) {
+        mouseX = event.touches[0].clientX;
+        mouseY = event.touches[0].clientY;
+        } else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
+            mouseX = event.originalEvent.changedTouches[0].clientX;
+            mouseY = event.originalEvent.changedTouches[0].clientY;
+        } else if (event.clientX && event.clientY) {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
     }
-
 }
 
 function animate() {
