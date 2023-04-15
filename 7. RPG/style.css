@@ -1,29 +1,60 @@
 html, body { 
     margin: 0;
     height: 100%;
- }
+}
 
- #canvas {
+p {
+    font-family: "Roboto";
+    position: relative;
+    color: #DDDDDD;
+    height: 30px;
+    margin: auto;
+    align-items: center;
+    text-align: center;
+    top: 15%;
+    font-size: 1.3rem;
+}
+
+#canvas {
     width: 100%;
     height: 100%;
     display: block; 
- }
+}
 
- #loading-screen {
-	position: absolute;
-	z-index: 2;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: #000000;
-	opacity: 1;
- 	transition: 1s opacity;
+#loading-screen {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 1;
+    transition: 1s opacity;
+    text-align: center;
+}
+
+#loading-screen.fade-in  {
+    opacity: 1;
 }
 
 #loading-screen.fade-out {
     opacity: 0;
 }
+
+#startBtn.fade-out {
+    opacity: 0;
+}
+
+#startBtn {
+    position: absolute;
+    text-align: center;
+    height: 40px;
+    width:  200px;
+    margin-left: -100px;
+    top: 80%;				
+}
+
 
 #loader {
     display: block;
@@ -88,4 +119,28 @@ html, body {
         -ms-transform: rotate(360deg);
         transform: rotate(360deg);
     }
+}
+
+#controls {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+}
+
+#controls-hud.fade-in  {
+    opacity: 1;
+}
+
+#controls-hud.fade-out  {
+    opacity: 0;
+}
+
+#HUDCamera {
+    position: absolute;
+    opacity: 1;
+    margin-top: 15px;
 }
