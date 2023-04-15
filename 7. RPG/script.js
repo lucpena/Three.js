@@ -14,6 +14,7 @@ let btnPressed = false;
 let hue, saturation, lightness = 0;
 let cameraFOV = 50;
 let initializated = false;
+let touched = false;
 
 // ANGLE STUFF
 let angle = 0;
@@ -629,21 +630,27 @@ function onDocumentMouseMove( event ) {
 
 function touchHandler(event) {
     if(initializated) {
+        touched = true;
         event.preventDefault();
 
         if (event.touches && event.touches[0]) {
         mouseX = event.touches[0].clientX - windowHalfX / 2;
         mouseY = event.touches[0].clientY;
         camera.fov = camera.fov - 10;
+        camera.updateProjectionMatrix();
         } else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
             mouseX = event.originalEvent.changedTouches[0].clientX - windowHalfX / 2;
             mouseY = event.originalEvent.changedTouches[0].clientY;
             camera.fov = camera.fov - 10;
+            camera.updateProjectionMatrix();
         } else if (event.clientX && event.clientY) {
             mouseX = event.clientX - windowHalfX / 2;
             mouseY = event.clientY;
             camera.fov = camera.fov - 10;
+            camera.updateProjectionMatrix();
         }
+
+        touched = false;
     }
 }
 
@@ -730,7 +737,7 @@ function render() {
     //     }
     // });
 
-    camera.fov = 45 - light.intensity;
+    if(!touched) camera.fov = 45 - light.intensity;
     camera.updateProjectionMatrix();  // Need this after changing            
 
     
