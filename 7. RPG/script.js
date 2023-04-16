@@ -632,14 +632,14 @@ function touchHandler(event) {
     if(initializated) {
         event.preventDefault();
         if (event.touches && event.touches[0]) {
-        mouseX = -0.5 + (event.touches[0].clientX - windowHalfX / 2) / 2;
-        mouseY = -0.5 + event.touches[0].clientY;
+        mouseX = event.touches[0].clientX - windowHalfX / 2;
+        mouseY =  event.touches[0].clientY;
         } else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
-            mouseX = -0.5 + (event.originalEvent.changedTouches[0].clientX - windowHalfX / 2) / 2;
-            mouseY = -0.5 + event.originalEvent.changedTouches[0].clientY;
+            mouseX = event.originalEvent.changedTouches[0].clientX - windowHalfX / 2;
+            mouseY = event.originalEvent.changedTouches[0].clientY;
         } else if (event.clientX && event.clientY) {
-            mouseX = -0.5 + (event.clientX - windowHalfX / 2) / 2;
-            mouseY = -0.5 + event.clientY;
+            mouseX = event.clientX - windowHalfX / 2;
+            mouseY = event.clientY;
         }
     }
 }
