@@ -121,6 +121,7 @@ function init() {
     camera.position.set(0, 2.5, 9);
     //camera.position.set(-1,2,4.2);  // ANA
     //camera.lookAt(-2.5,1,2);
+    console.log(camera)
 
     // CONTROLS
     controls = new FirstPersonControls( camera, renderer.domElement );
@@ -632,14 +633,14 @@ function touchHandler(event) {
     if(initializated) {
         event.preventDefault();
         if (event.touches && event.touches[0]) {
-        mouseX = event.touches[0].clientX - windowHalfX / 2;
-        mouseY =  event.touches[0].clientY;
+        mouseX = - 2 + event.touches[0].clientX - windowHalfX / 2;
+        mouseY = event.touches[0].clientY- windowHalfY / 2;
         } else if (event.originalEvent && event.originalEvent.changedTouches[0]) {
-            mouseX = event.originalEvent.changedTouches[0].clientX - windowHalfX / 2;
-            mouseY = event.originalEvent.changedTouches[0].clientY;
+            mouseX = - 2 + event.originalEvent.changedTouches[0].clientX - windowHalfX / 2;
+            mouseY = event.originalEvent.changedTouches[0].clientY - windowHalfY / 2;
         } else if (event.clientX && event.clientY) {
-            mouseX = event.clientX - windowHalfX / 2;
-            mouseY = event.clientY;
+            mouseX = - 2 + event.clientX - windowHalfX / 2;
+            mouseY = event.clientY- windowHalfY / 2;
         }
     }
 }
@@ -684,9 +685,8 @@ function render() {
 
     
     // LIGHTS ANIMATION
-    light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) * 0.45 );
+    light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) * 0.6 );
     hemiLight.intensity = light.intensity / 4;
-    
 
     hue = Math.random();
     saturation = 0.75;
@@ -708,33 +708,12 @@ function render() {
     spotLight.target.position.set( Math.sin(angle * 6) * 4,  Math.cos(angle * 2) * 4, Math.cos(angle * 2));
     spotLight2.target.position.set( Math.cos(angle * 6) * 4,  Math.sin(angle * 2) * 4, Math.cos(angle * 2));
 
-    // CAMERA ANIMATIONS
-
-    // document.addEventListener("click", event => {    
-    //     //console.log(event);
-    //     event.preventDefault();
-
-    //     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    //     mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-    
-    //     raycaster.setFromCamera( mouse, camera );
-    
-    //     var intersects = raycaster.intersectObjects( scene.children, true );
-    
-    //     if ( intersects.length > 0 ) {
-    //         let object = intersects[0].object;
-    //         console.log( 'Intersection:', intersects[ 0 ] );
-    //     }
-    // });
-
-    if(!touched) camera.fov = 45 - light.intensity;
+    camera.fov = 45 - light.intensity * 2;
     camera.updateProjectionMatrix();  // Need this after changing            
-
     
     // UPDATING THE CAMERA CONTROLS
     camera.position.x = radius * Math.cos(angle);
-    camera.lookAt((camera.position.x / 4) + (mouseX / 200 ), 1.1 + (-mouseY / 220 ), 4);
-
+    camera.lookAt((camera.position.x / 4) + (mouseX / 1600 ), 1.1 + (-mouseY / 1600 ), 4);
 
     if( statsEnabled ) stats.update();
 
