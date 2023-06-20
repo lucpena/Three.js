@@ -605,10 +605,8 @@ function init() {
             console.error( 'An error happened loading Mister Black: ' + error );
             
         }
-    );  
-        
-        
-    
+    );        
+
     // CHECK FOR CHANGES ON WINDOW SIZE
     window.onresize = function () {
         const width = window.innerWidth;
@@ -620,7 +618,6 @@ function init() {
     
     };
 }
-
 
 function onDocumentMouseMove( event ) {
 
@@ -682,7 +679,6 @@ function render() {
         smokeParticles[i].rotation.z += 0.0025;
         smokeParticles[i].position.z += (smokeParticles[i].position.z >= 8 ? -11 : 0.008);
     }
-
     
     // LIGHTS ANIMATION
     light.intensity = Math.abs( Math.sin(clock.elapsedTime * 7) * 0.6 );
@@ -691,6 +687,7 @@ function render() {
     hue = Math.random();
     saturation = 0.75;
     lightness = 0.5;
+    
     // RANDOM NIGHCLUB LIGHTS
     if ( light.intensity <= 0.1 ) {
         light.color.setHSL(hue, saturation, lightness);

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Porrada Jogo II</title>
+    <link rel="icon" type="image/x-icon" href="./favicon/favicon.ico">
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <section id="loading-screen">
+        <p>Loading Porrada Jogo™ II</p>
+        <button id="startBtn" onclick="btnClicked()" style="opacity:0">Click to Start...</button>
+        <div id="loader"></div>
+    </section>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- VERTEX SHADER -->
+    <script type="x-shader/x-vertex" id="vertexShader">
+			varying vec3 vWorldPosition;
+
+			void main() {
+
+				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+				vWorldPosition = worldPosition.xyz;
+
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+			}
+		</script>
+    <!-- FRAGMENT SHADER -->
+    <script type="x-shader/x-fragment" id="fragmentShader">
+			uniform vec3 topColor;
+			uniform vec3 bottomColor;
+			uniform float offset;
+			uniform float exponent;
+
+			varying vec3 vWorldPosition;
+
+			void main() {
+
+				float h = normalize( vWorldPosition + offset ).y;
+				gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
+
+			}
+		</script>
+
+    <!-- <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script> -->
+
+    <script type="importmap">
+		{
+			"imports": {
+				"three": "https://unpkg.com/three/build/three.module.js",
+				"three/addons": "https://unpkg.com/three/examples/jsm/",
+				"gltfsrc": "https://unpkg.com/three/examples/jsm/loaders/GLTFLoader.js",
+				"orbitsrc": "https://unpkg.com/three/examples/jsm/controls/OrbitControls.js",
+				"statssrc": "https://unpkg.com/three/examples/jsm/libs/stats.module.js",
+				"fpssrc": "https://unpkg.com/three/examples/jsm/controls/FirstPersonControls.js",
+				"fbxsrc": "https://unpkg.com/three/examples/jsm/loaders/FBXLoader.js",
+				"RectAreaLightHelperSRC": "https://unpkg.com/three/examples/jsm/helpers/RectAreaLightHelper.js"
+			}
+		}
+		</script>
+
+    <script type="module" src="./script.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Metallic Showroom Gallery
+* source:	https://sketchfab.com/3d-models/metallic-showroom-gallery-5dca77c363d449409d878782e3da369f
+* author:	jimbogies (https://sketchfab.com/jimbogies)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Metallic Showroom Gallery" (https://sketchfab.com/3d-models/metallic-showroom-gallery-5dca77c363d449409d878782e3da369f) by jimbogies (https://sketchfab.com/jimbogies) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
