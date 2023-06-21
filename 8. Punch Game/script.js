@@ -35,6 +35,7 @@ let MC_IsIdle               = true;
 let MC_IsWalking            = false;
 let MC_IsPunching           = false; 
 let MC_IsSuper              = false;
+let MC_IsHit                = false;
 let MC_SuperAnimationTime   = 0;
 let MC_Position             = new THREE.Vector3(0, 0, 0);
 let MC_Rotation             = new THREE.Euler( 0, - Math.PI / 2, 0 );
@@ -51,14 +52,16 @@ let NPC_Rotation            = new THREE.Euler( 0, - Math.PI / 2, 0 );
 const NPC_AnimationActions  = [];
 let NPC_LastAction          = THREE.AnimationAction;
 let NPC_ActiveAction        = THREE.AnimationAction;
-let NPC_isIdle              = true;
-let NPC_isPunching          = false;
-let NPC_isWalking           = false;
-let NPC_isHit               = false;
+let NPC_IsIdle              = true;
+let NPC_IsPunching          = false;
+let NPC_IsWalking           = false;
+let NPC_IsHit               = false;
 let NPC_isNearPlayer        = false;
+let NPC_isReadyToPunch      = false;
 let NPC_Hitbox;
 let NPC_HitboxBB;
 let NPC_Model; 
+let NPC_AttackTimer;
 
 const AudioLoader           = new THREE.AudioLoader();
 const Listener              = new THREE.AudioListener();
@@ -252,7 +255,7 @@ function initThree()
         let lePie = Math.PI;
         cityModel = result.scene.children[ 0 ];
         cityModel.scale.set(7, 7, 7);
-        cityModel.position.set( -11, 0, 7 );
+        cityModel.position.set( -11, 0.1, 7 );
         cityModel.rotation.set( -lePie/2, 0, lePie/2 );
         cityModel.traverse( n => {
             if ( n.isMesh ) {
@@ -292,7 +295,7 @@ function initThree()
 
         const MC_AnimationAction = MCMixer.clipAction( character.animations[ 0 ] );
         MC_AnimationAction.realAnimationTime = MC_AnimationAction._clip.duration;
-        MC_AnimationActions.push( MC_AnimationAction );
+        MC_AnimationActions[0] = MC_AnimationAction;
         MC_ActiveAction = MC_AnimationActions[0];
         
         character.traverse( function ( child ) 
@@ -309,7 +312,8 @@ function initThree()
         {
             const MC_AnimationAction = MCMixer.clipAction( character.animations[ 0 ] );
             MC_AnimationAction.realAnimationTime = MC_AnimationAction._clip.duration;
-            MC_AnimationActions.push( MC_AnimationAction );
+            //MC_AnimationActions.push( MC_AnimationAction );
+            MC_AnimationActions[ 1 ] = MC_AnimationAction;
             console.log("Animation james_walk loaded...");
         });
 
@@ -317,7 +321,7 @@ function initThree()
             const MC_AnimationAction = MCMixer.clipAction( character.animations[ 0 ] );
             MC_SuperAnimationTime = MC_AnimationAction._clip.duration;
             MC_AnimationAction.realAnimationTime = MC_AnimationAction._clip.duration;
-            MC_AnimationActions.push( MC_AnimationAction );
+            MC_AnimationActions[ 2 ] = MC_AnimationAction;
             console.log( "Animation james_super loaded..." );
         });
 
@@ -326,7 +330,7 @@ function initThree()
             MC_AnimationAction.loop = THREE.LoopOnce ;
             MC_AnimationAction.clampWhenFinished  = true;
             MC_AnimationAction.realAnimationTime = MC_AnimationAction._clip.duration - animationEndRemove;
-            MC_AnimationActions.push( MC_AnimationAction );
+            MC_AnimationActions[ 3 ] = MC_AnimationAction;
             console.log( "Animation james_p1 loaded..." );
         });
 
@@ -335,7 +339,7 @@ function initThree()
             MC_AnimationAction.loop = THREE.LoopOnce;
             MC_AnimationAction.clampWhenFinished = true;
             MC_AnimationAction.realAnimationTime = MC_AnimationAction._clip.duration;
-            MC_AnimationActions.push( MC_AnimationAction );
+            MC_AnimationActions[ 4 ] = MC_AnimationAction;
             console.log( "Animation james_p2 loaded..." );
         });
 
@@ -344,14 +348,23 @@ function initThree()
             MC_AnimationAction.loop = THREE.LoopOnce;
             MC_AnimationAction.clampWhenFinished = true;
             MC_AnimationAction.realAnimationTime = MC_AnimationAction._clip.duration - animationEndRemove;
-            MC_AnimationActions.push( MC_AnimationAction );
+            MC_AnimationActions[ 5 ] = MC_AnimationAction;
             console.log( "Animation james_p3 loaded..." );
+        } );
+
+        loader.load( 'chars/james/james_hit.fbx', ( character ) => {
+            const MC_AnimationAction = MCMixer.clipAction( character.animations[ 0 ] );
+            MC_AnimationAction.loop = THREE.LoopOnce;
+            MC_AnimationAction.clampWhenFinished = true;
+            MC_AnimationAction.realAnimationTime = MC_AnimationAction._clip.duration;
+            MC_AnimationActions[ 6 ] = MC_AnimationAction;
+            console.log( "Animation james_hit loaded..." );
         } );
 
         console.log( MC_AnimationActions );
 
         MC_Model = character;
-        character.add( Listener );
+        camera.add( Listener );
         scene.add( character );
     });
 
@@ -380,7 +393,7 @@ function initThree()
 
         loader.load( 'chars/enemies/manequim_hit.fbx', ( character ) => {
             const NPC_AnimationAction = NPCMixer.clipAction( character.animations[ 0 ] );
-            NPC_AnimationAction.loop = THREE.LoopOnce;
+            NPC_AnimationAction.loop = THREE.LoopRepeat;
             NPC_AnimationAction.clampWhenFinished = true;
             NPC_AnimationAction.realAnimationTime = NPC_AnimationAction._clip.duration;
             NPC_AnimationActions.push( NPC_AnimationAction );
@@ -392,6 +405,13 @@ function initThree()
             NPC_AnimationAction.realAnimationTime = NPC_AnimationAction._clip.duration;
             NPC_AnimationActions.push( NPC_AnimationAction );
             console.log( "Animation manequim_walk loaded..." );
+        } );
+
+        loader.load( 'chars/enemies/manequim_attack.fbx', ( character ) => {
+            const NPC_AnimationAction = NPCMixer.clipAction( character.animations[ 0 ] );
+            NPC_AnimationAction.realAnimationTime = NPC_AnimationAction._clip.duration - 0.2;
+            NPC_AnimationActions.push( NPC_AnimationAction );
+            console.log( "Animation manequim_attack loaded..." );
         } );
 
         console.log( NPC_AnimationActions )
@@ -540,6 +560,14 @@ AudioLoader.load( 'fx/james_super.wav', SuperBuffer => {
 function playSuperSound () { superSound.play(); }
 function stopSuperSound () { superSound.stop(); }
 
+const hitSound = new THREE.Audio( Listener );
+AudioLoader.load( 'fx/james_hit.mp3', SuperBuffer => {
+    hitSound.setBuffer( SuperBuffer );
+    hitSound.setVolume( 0.1 );
+} );
+function playHitVoiceSound () { hitSound.play(); }
+function stopHitVoiceSound () { hitSound.stop(); }
+
 
 /****************************
 *  Player Animation Setup
@@ -567,19 +595,22 @@ function MC_Actions () {
     else if ( MC_IsSuper ) {
         playAnimation( "super" );
     }
+    else if ( MC_IsHit ) {
+        playAnimation( "hit" );
+    }
     else if ( MC_IsIdle ) {
-        //MC_Combo = 0;
         playAnimation( "idle" );
     }
     else if ( MC_IsWalking ) {
-       // MC_Combo = 0;
+        MC_Combo = 0;
         playAnimation( "walk" );
     }
 
 }
 
 function playAnimation( thisAnimation )
-{
+{    
+    //console.log(thisAnimation)
     switch ( thisAnimation )
     {
         case "idle":
@@ -606,6 +637,10 @@ function playAnimation( thisAnimation )
             setAction( MC_AnimationActions[ 5 ] );
             break;
 
+        case "hit":
+            setAction( MC_AnimationActions[ 6 ] );
+            break;
+
         default:
             setAction( MC_AnimationActions[ 0 ] );
             break;
@@ -614,7 +649,8 @@ function playAnimation( thisAnimation )
 
 let GotLastTimeAnimationWasUsed = false;
 let SoundNotPlayedPunch = true;
-let SoundNotPlayedSuper = true;
+let SoundNotPlayedSuper = true; 
+let SoundNotPlayedHit   = true;
 let SuperCooldownClockStarted = false;
 let AnimationStartTime = 0;
 let AnimationEndTime = 0;
@@ -623,7 +659,7 @@ function setAction ( toAction )
 {
     let AnimationDuration = toAction.time;
 
-    if ( (MC_IsPunching || MC_IsSuper) && !GotLastTimeAnimationWasUsed )
+    if ( (MC_IsPunching || MC_IsSuper || MC_IsHit) && !GotLastTimeAnimationWasUsed )
     {
         if ( toAction.realAnimationTime )
         {
@@ -639,7 +675,6 @@ function setAction ( toAction )
         GotLastTimeAnimationWasUsed = true;
         AnimationStartTime = animationTimer;
         AnimationEndTime = AnimationStartTime + AnimationDuration;
-
 
     }
     // Keep the Animation of the Action    
@@ -657,7 +692,6 @@ function setAction ( toAction )
     {
         SoundNotPlayedPunch = true;
         MC_IsPunching = false;
-        stopPunchSound();
     }
 
     if ( animationTimer > AnimationEndTime + MC_SuperCooldownValue )
@@ -696,6 +730,33 @@ function setAction ( toAction )
         // console.log( "!MC_SuperCooldown: " + !MC_SuperCooldown )
     }
 
+
+    // if (  MC_IsHit && animationTimer < AnimationEndTime )
+    // {
+    //     console.log("lalalala");
+    //     playHitVoiceSound();
+    //     MC_IsHit = false;
+    //     MC_IsIdle = true;
+    // }
+
+    if ( animationTimer < AnimationEndTime && MC_IsHit ) {
+        if ( SoundNotPlayedHit ) 
+        {           
+            SoundNotPlayedHit = false;
+            MC_IsIdle = false;
+            playHitSound();
+            playHitVoiceSound();
+        }
+
+        MC_IsHit = false;
+        MC_IsIdle = true;
+
+    } else {
+        //sconsole.log( "MC_IsHit: " + MC_IsHit )
+        SoundNotPlayedHit = true;
+    }
+
+
     if( animationTimer > AnimationEndTime )
     {
         GotLastTimeAnimationWasUsed = false;
@@ -722,20 +783,18 @@ function setAction ( toAction )
 ****************************/
 
 function NPC_Actions ( state ) {
+    //console.log( state )
     if ( state == "attack" )
     {
         playNPCAnimation( "attack" );
     }    
     else if ( state == "hit" ) {
-        //MC_Combo = 0;
         playNPCAnimation( "hit" );
     }
     else if ( state == "idle" ) {
-        //MC_Combo = 0;
         playNPCAnimation( "idle" );
     }
     else if ( state == "walk" ) {
-        //MC_Combo = 0;
         playNPCAnimation( "walk" );
     }
 
@@ -748,16 +807,16 @@ function playNPCAnimation ( thisAnimation ) {
             break;
 
         case "hit":
-            setNPCAction( NPC_AnimationActions[ 2 ] );
+            setNPCAction( NPC_AnimationActions[ 3 ] );
             break;
 
         case "walk":
             setNPCAction( NPC_AnimationActions[ 1 ] );
             break;
 
-        // case "attack":
-        //     setNPCAction( NPC_AnimationActions[ 3 ] );
-        //     break;
+        case "attack":
+            setNPCAction( NPC_AnimationActions[ 2 ] );
+            break;
 
         // case "punch2":
         //     setNPCAction( NPC_AnimationActions[ 4 ] );
@@ -775,78 +834,54 @@ function playNPCAnimation ( thisAnimation ) {
 
 let NPC_GotLastTimeAnimationWasUsed = false;
 let NPC_SoundNotPlayedPunch = true;
+let NPC_SoundNotPlayedHit = true;
 let NPC_AnimationStartTime = 0;
 let NPC_AnimationEndTime = 0;
 
 function setNPCAction ( toAction ) {
-    let AnimationDuration = toAction.time;
+    let NPC_AnimationDuration = toAction.time;
 
-    if ( toAction.realAnimationTime ) {
-        AnimationDuration = toAction.realAnimationTime;
-        //console.log( AnimationDuration );
-    }
+    // if ( toAction.realAnimationTime ) {
+    //     NPC_AnimationDuration = toAction.realAnimationTime;
+    // }  
 
-    //console.log( "NPC AnimationDuration: " + AnimationDuration );
-
-    if ( NPC_isHit && !NPC_GotLastTimeAnimationWasUsed )
-    {
-     
-        GotLastTimeAnimationWasUsed = true;
+    if ( !NPC_GotLastTimeAnimationWasUsed )
+    {     
+        NPC_GotLastTimeAnimationWasUsed = true;
         NPC_AnimationStartTime = animationTimer;
-        NPC_AnimationEndTime = NPC_AnimationStartTime + AnimationDuration;
-
+        NPC_AnimationEndTime = NPC_AnimationStartTime + NPC_AnimationDuration;
     }
-    // Keep the Animation of the Action    
-    if ( animationTimer < AnimationEndTime && NPC_isHit ) {
-        if ( NPC_SoundNotPlayedPunch ) {
-            NPC_SoundNotPlayedPunch = false;
-            NPC_isHit = true;
-            NPC_isIdle = false;
+
+    // NPC taking damage
+    if ( animationTimer < NPC_AnimationEndTime && NPC_IsHit ) {
+        if ( NPC_SoundNotPlayedHit ) {
+            NPC_SoundNotPlayedHit = false;
+            NPC_IsIdle = false;
             playHitSound();
         }
     } else {
-        NPC_SoundNotPlayedPunch = true;
-        NPC_isHit = false;
-        NPC_isIdle = true;
+        NPC_SoundNotPlayedHit = true;
+        NPC_IsHit = false;
+        NPC_IsIdle = true;
         stopHitSound();
     }
 
+    // NPC Attacking
+   // console.log( "   NPC_AnimationEndTime: " + NPC_AnimationEndTime );
+    if ( animationTimer < NPC_AnimationEndTime && NPC_IsPunching ) {
 
-    // if ( animationTimer > AnimationEndTime + MC_SuperCooldownValue ) {
-    //     MC_SuperCooldown = false;
-    //     //console.log( "Super available..." )
-    // }
-    // if ( MC_IsSuper ) {
-    //     console.log( "animationTimer < AnimationEndTime : " + animationTimer < AnimationEndTime );
-    //     console.log( "MC_IsSuper: " + MC_IsSuper );
-    //     console.log( "!MC_SuperCooldown: " + !MC_SuperCooldown );
-    // }
-    // if ( animationTimer < AnimationEndTime && MC_IsSuper && !MC_SuperCooldown ) {
-    //     MC_IsPunching = false;
+        if ( NPC_SoundNotPlayedPunch ) {
+            NPC_SoundNotPlayedPunch = false;
+           playPunchSound();
+        }
+    } else {
+        NPC_SoundNotPlayedPunch = true;
+        NPC_IsPunching = false;
+    }
 
-    //     if ( !SuperCooldownClockStarted ) {
-    //         SuperCooldownClockStarted = true;
-    //         MC_IsSuper = true;
-    //         MC_SuperCooldown = true;
-    //     }
 
-    //     console.log( "SoundNotPlayedSuper: " + SoundNotPlayedSuper );
-    //     if ( SoundNotPlayedSuper ) {
-    //         SoundNotPlayedSuper = false;
-    //         playSuperSound();
-    //     }
-
-    // } else if ( animationTimer > AnimationEndTime && MC_IsSuper ) {
-    //     SoundNotPlayedSuper = true;
-    //     MC_IsSuper = false;
-    //     stopSuperSound();
-    //     console.log( "Super Cooldown." );
-    //     console.log( "MC_IsSuper: " + MC_IsSuper );
-    //     console.log( "!MC_SuperCooldown: " + !MC_SuperCooldown );
-    // }
-
-    if ( animationTimer > AnimationEndTime ) {
-        GotLastTimeAnimationWasUsed = false;
+    if ( animationTimer > NPC_AnimationEndTime ) {
+        NPC_GotLastTimeAnimationWasUsed = false;
     }
 
     // Changing animation and blend
@@ -911,7 +946,7 @@ function updateAnimations()
     {
         MCMixer.update( delta );        
 
-        if ( keyboard.movement && !MC_IsPunching) {
+        if ( keyboard.movement && !MC_IsPunching && !MC_IsHit ) {
             MC_IsWalking = true;
 
             if( keyboard.up )
@@ -977,7 +1012,7 @@ function updateAnimations()
             MC_HitboxPunch.scale.set( 0.6, 1.25, 0.5 );
         }
 
-        console.log( MC_Position.x )
+        //console.log( MC_Position.x )
         if ( MC_Position.z >= -1.35 && ( MC_Position.x > -11 || MC_Position.x < -15.5 ) )
             MC_Position.y = 0;
         else
@@ -1002,6 +1037,16 @@ function updateAnimations()
 function updateNPCAnimations ()
 {
     let facingDirection = 0.75;
+    NPC_AttackTimer = clock.getElapsedTime();
+
+    let attackCooldown = 5;
+
+    if ( Math.round( NPC_AttackTimer ) % attackCooldown == 0)
+    {
+        NPC_isReadyToPunch = true;
+    } else {
+        NPC_isReadyToPunch = false;
+    }
 
     if ( StartAnimations && MixerReady ) {
         NPCMixer.update( delta );
@@ -1014,71 +1059,85 @@ function updateNPCAnimations ()
             NPC_Rotation.y = -Math.PI / 2;
         }
 
-        if ( NPC_isHit ) {
+        if ( NPC_IsHit ) 
+        {
             NPC_Actions( "hit" );
-        }else if( NPC_isWalking )
+        }
+        else if( NPC_IsWalking )
         {
             NPC_Actions( "walk" );
         }
-        else if( NPC_isIdle )
+        else if ( NPC_IsPunching ) {
+            NPC_Actions( "attack" );
+        }
+        else if( NPC_IsIdle )
         {
             NPC_Actions( "idle" );
-        }
-
-        // console.log( "NPC_Position.x: " + NPC_Position.x )
-        // console.log( "MC_Position.x - NPC_Position.x: " + ( Math.round( MC_Position.x - NPC_Position.x ) ) );
-        // Makes the enemy goes to the Player
-        if ( Math.abs(MC_Position.x - NPC_Position.x) > 1.5)
-        {
-            if (  MC_Position.x - NPC_Position.x < 1.5 ) {
-                NPC_isWalking = true;
-                NPC_isIdle = false;
-                NPC_Position.x -= NPC_MoveSpeed;
-             }
-
-            else if ( MC_Position.x - NPC_Position.x > 1.5 ) {
-                NPC_isWalking = true;
-                NPC_isIdle = false;
-                NPC_Position.x += NPC_MoveSpeed;
-            } 
-            
         } 
-        if ( MC_Position.z - NPC_Position.z != 0.1 )
+
+        // Do not walk while taking damage
+        if ( !NPC_IsHit )
         {
-            if ( MC_Position.z - NPC_Position.z < 0.1 ) 
+            if ( Math.abs(MC_Position.x - NPC_Position.x) > 1.35)
             {
-                NPC_isWalking = true;
-                NPC_isIdle = false;
-                NPC_Position.z -= NPC_MoveSpeed;
+                if (  MC_Position.x - NPC_Position.x < 1.35 ) {
+                    NPC_IsWalking = true;
+                    NPC_IsIdle = false;
+                    NPC_Position.x -= NPC_MoveSpeed;
+                    }
+
+                else if ( MC_Position.x - NPC_Position.x > 1.35 ) {
+                    NPC_IsWalking = true;
+                    NPC_IsIdle = false;
+                    NPC_Position.x += NPC_MoveSpeed;
+                } 
+
             } 
-            else if ( MC_Position.z - NPC_Position.z > 0.1 ) 
+            if ( MC_Position.z - NPC_Position.z != 0.1 )
             {
-                NPC_isWalking = true;
-                NPC_isIdle = false;
-                NPC_Position.z += NPC_MoveSpeed;
+                if ( MC_Position.z - NPC_Position.z < 0.1 ) 
+                {
+                    NPC_IsWalking = true;
+                    NPC_IsIdle = false;
+                    NPC_Position.z -= NPC_MoveSpeed;
+                } 
+                else if ( MC_Position.z - NPC_Position.z > 0.1 ) 
+                {
+                    NPC_IsWalking = true;
+                    NPC_IsIdle = false;
+                    NPC_Position.z += NPC_MoveSpeed;
+                }
+            }
+
+            if ( Math.abs( MC_Position.x - NPC_Position.x ) < 1.5 ) {
+                NPC_IsIdle = true;
+                NPC_IsWalking = false;
+            }
+
+            if ( MC_Position.z - NPC_Position.z > 0.15 ) {
+                NPC_IsIdle = false;
+                NPC_IsWalking = true;
+            }
+            else {
+                NPC_IsIdle = true;
             }
         }
 
-        if ( Math.abs( MC_Position.x - NPC_Position.x ) < 1.5 )
-        {
-            NPC_isIdle = true;
-            NPC_isWalking = false;
-        }
-        
-        if ( MC_Position.z - NPC_Position.z > 0.15 )
-        {
-            NPC_isIdle = false;
-            NPC_isWalking = true;
-        }
-        else {
-            NPC_isIdle = true;
-        }
 
         if ( NPC_Position.z >= -1.35 && ( NPC_Position.x > -11 || NPC_Position.x < -15.5 ) )
             NPC_Position.y = 0;
         else
             NPC_Position.y = -0.3;
 
+        
+        if( NPC_IsIdle && !NPC_IsWalking && NPC_isReadyToPunch )
+        {
+            NPC_IsPunching = true;
+        }     
+        
+
+        if ( NPC_IsIdle && !NPC_isReadyToPunch )
+            NPC_IsPunching = false
 
         NPC_Model.rotation.copy( NPC_Rotation );
         NPC_Model.position.copy( NPC_Position );
@@ -1112,16 +1171,21 @@ function checkCollisions()
     MC_HitboxHitBB.copy( MC_HitboxHit.geometry.boundingBox ).applyMatrix4( MC_HitboxHit.matrixWorld );
     NPC_HitboxBB.copy( NPC_Hitbox.geometry.boundingBox ).applyMatrix4( NPC_Hitbox.matrixWorld );
 
-    // Hitted punch. outch
-    if( MC_HitboxPunchBB.intersectsBox(NPC_HitboxBB) && MC_IsPunching ) 
-    {
-        NPC_isHit = true;
-    }
+    // Hitted punch in NPC. outch
+    if( MC_HitboxPunchBB.intersectsBox(NPC_HitboxBB) && MC_IsPunching )     
+        NPC_IsHit = true;
+    
 
-    // Super hitted. outch
-    if ( MC_HitboxPunchBB.intersectsBox( NPC_HitboxBB ) && MC_IsSuper ) {
-        NPC_isHit = true;
-    }
+    // Super hitted in NPC. outch
+    if ( MC_HitboxPunchBB.intersectsBox( NPC_HitboxBB ) && MC_IsSuper ) 
+        NPC_IsHit = true;
+    
+
+    // NPC hitted in Player
+    if ( NPC_HitboxBB.intersectsBox( MC_HitboxHitBB ) && NPC_IsPunching )
+        MC_IsHit = true;
+
+
 }
 
 function animate()
