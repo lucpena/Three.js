@@ -65,6 +65,8 @@ let NPC_HitboxBB;
 let NPC_Model;
 let NPC_AttackTimer;
 
+let NPC_list                = [];
+
 const AudioLoader           = new THREE.AudioLoader();
 const Listener              = new THREE.AudioListener();
 
@@ -76,9 +78,11 @@ let animationTimer          = 0;
 let world                   = new CANNON.World();
 let timeStep                = 1/60;
 
-//const gui                   = new GUI();
-const hitboxDebug           = false;
-const statsEnabled          = false;
+
+// DEBUG
+const gui                   = new GUI();
+const hitboxDebug           = true;
+const statsEnabled          = true;
 
 initCannon();
 initThree();
@@ -430,6 +434,7 @@ function initThree()
         console.log( NPC_AnimationActions )
 
         NPC_Model = character;
+        
         scene.add( character );
     } );
 
@@ -1104,10 +1109,16 @@ function updateAnimations()
 
 }
 
+function NPC_spawn()
+{
+
+}
+
 function NPC_Kill()
 {    
     NPC_isDead = true;
     NPC_IsIdle = false;
+    NPC_Actions( "dead" );  
 
     // Traverse the scene to find the FBX model
     scene.traverse( function ( object ) {
@@ -1163,10 +1174,6 @@ function NPC_Kill()
             } );
         }
     } );    
-
-
-
-
 }
 
 function updateNPCAnimations ()
@@ -1209,7 +1216,8 @@ function updateNPCAnimations ()
             }
 
             // Do not walk while taking damage
-            if ( !NPC_IsHit ) {
+            console.log( Math.abs( MC_Position.x - NPC_Position.x ) )
+            if ( !NPC_IsHit && Math.abs(MC_Position.x - NPC_Position.x) < 4 ) {
                 if ( Math.abs( MC_Position.x - NPC_Position.x ) > 1.35 ) {
                     if ( MC_Position.x - NPC_Position.x < 1.35 ) {
                         NPC_IsWalking = true;
@@ -1284,7 +1292,6 @@ function updateNPCAnimations ()
     } else  // NPC_IsDead
     {
         NPCMixer.update( delta );
-        NPC_Actions( "dead" );  
         NPC_Kill();      
     }
 
@@ -1319,7 +1326,7 @@ function checkCollisions()
         NPC_IsHit = true;
 
 
-    // NPC hitted in Player
+    // NPC hitted by Player
     if ( NPC_HitboxBB.intersectsBox( MC_HitboxHitBB ) && NPC_IsPunching )
         MC_IsHit = true;
 
@@ -1428,7 +1435,6 @@ function handleKeyUp ( event ) {
         keyboard.super = false;
         MC_GetSuperInput = true;
     }
-
 
 }
 
