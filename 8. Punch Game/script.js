@@ -191,7 +191,7 @@ function initThree()
     // Lights
 
     // Ambient Light
-    hemiLight = new THREE.HemisphereLight( 0xffeeb1, 0x202020, 0.8 );
+    hemiLight = new THREE.HemisphereLight( 0xffeeb1, 0x202020, 1.2 );
     hemiLight.color.setHSL( 0.6, 1, 0.6 );
     hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
     hemiLight.position.set( 0, 25, 0 );
@@ -840,6 +840,7 @@ function setAction ( toAction )
 function NPC_TakeDamage ( value )
 {
     NPC_Health -= value;
+    if (NPC_Health <= 0) NPC_Health = 0;
     playHitSound();
     console.log( "NPC_Health: " + NPC_Health );
 }
@@ -1111,18 +1112,22 @@ function updateAnimations()
 
 function NPC_spawn()
 {
+    // NPC_isDead = false;
+    // NPC_IsIdle = true;
+    // NPC_Health = 100;
 
+    // scene.remove(NPC_Model);
+    // scene.add(NPC_Model);
 }
 
 function NPC_Kill()
 {    
-    NPC_isDead = true;
     NPC_IsIdle = false;
     NPC_Actions( "dead" );  
 
     // Traverse the scene to find the FBX model
     scene.traverse( function ( object ) {
-        if ( object === NPC_Model ) { // Replace 'object' with 'NPC_Model'
+        if ( object === NPC_Model && NPC_isDead) { // Replace 'object' with 'NPC_Model'
             // Find the mesh in the FBX model
             object.traverse( function ( child ) {
                 if ( child.isMesh ) {
@@ -1164,10 +1169,7 @@ function NPC_Kill()
                             clearInterval( fadeOutInterval );
 
                             // Remove the model from the scene
-                            scene.remove( object );
-
-                            //scene.remove( NPC_Model );
-                            //scene.remove( NPC_Hitbox );
+                            //scene.remove( object );
                         }
                     }, 1 ); // Update the opacity every millisecond
                 }
@@ -1216,7 +1218,7 @@ function updateNPCAnimations ()
             }
 
             // Do not walk while taking damage
-            console.log( Math.abs( MC_Position.x - NPC_Position.x ) )
+            //console.log( Math.abs( MC_Position.x - NPC_Position.x ) )
             if ( !NPC_IsHit && Math.abs(MC_Position.x - NPC_Position.x) < 4 ) {
                 if ( Math.abs( MC_Position.x - NPC_Position.x ) > 1.35 ) {
                     if ( MC_Position.x - NPC_Position.x < 1.35 ) {
@@ -1256,6 +1258,8 @@ function updateNPCAnimations ()
                 else {
                     NPC_IsIdle = true;
                 }
+            } else {
+                NPC_isReadyToPunch = false;
             }
 
 
@@ -1265,9 +1269,9 @@ function updateNPCAnimations ()
                 NPC_Position.y = -0.3;
 
 
-            if ( NPC_IsIdle && !NPC_IsWalking && NPC_isReadyToPunch ) {
+            if ( NPC_IsIdle && !NPC_IsWalking && NPC_isReadyToPunch )
                 NPC_IsPunching = true;
-            }
+            
 
             if ( NPC_IsIdle && !NPC_isReadyToPunch )
                 NPC_IsPunching = false;
@@ -1292,7 +1296,9 @@ function updateNPCAnimations ()
     } else  // NPC_IsDead
     {
         NPCMixer.update( delta );
-        NPC_Kill();      
+        NPC_isDead = true;
+        NPC_Kill();
+        setTimeout( NPC_spawn, 10000 ); // Aguarda 10 segundos (10000 milissegundos) antes de chamar NPC_spawn()
     }
 
 }
