@@ -65,7 +65,30 @@ let NPC_HitboxBB;
 let NPC_Model;
 let NPC_AttackTimer;
 
-let NPC_list                = [];
+class Enemy {
+    constructor( position ) {
+        this.position = position.clone();
+        this.rotation = new THREE.Euler( 0, -Math.PI / 2, 0 );
+        this.animationActions = [];
+        this.lastAction = null;
+        this.activeAction = null;
+        this.isIdle = true;
+        this.isPunching = false;
+        this.isWalking = false;
+        this.isHit = false;
+        this.isNearPlayer = false;
+        this.isReadyToPunch = false;
+        this.isDead = false;
+        this.health = 100;
+        this.hitbox = null; // Você pode criar um hitbox para cada inimigo
+        this.hitboxBB = null;
+        this.model = null; // Modelo 3D do inimigo
+        this.attackTimer = null;
+    }
+}
+
+let NPC_List                = [];
+let MAP_NumEnemies          = 3;
 
 const AudioLoader           = new THREE.AudioLoader();
 const Listener              = new THREE.AudioListener();
