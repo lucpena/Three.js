@@ -2,40 +2,57 @@ import * as THREE from "three";
 //import * as CANNON from "cannon";
 
 import Stats from "statssrc";
-import { FBXLoader } from "fbxsrc";
 import { GUI } from "guisrc";
-import { GLTFLoader } from "gltfsrc";
+
+import { cout, coutAssetLoading, cerr } from "./utils.js";
+import * as CHAR from "./character.js";
 
 let canvas, camera, scene, renderer, container;
-let ok = true;
+
+const cameraTargetPosition = new THREE.Vector3(); // Posição alvo da câmera
+const cameraTargetQuaternion = new THREE.Quaternion(); // Rotação alvo da câmera
 
 const clock         = new THREE.Clock();
 let delta           = 0;
-let animationTimer  = 0;
+let timerSeconds    = 0;
+let myElapsedTime   = null;
+let loadingManager  = null;
 
-let btnPressed = true;
+let btnPressed = false;
 let statsEnabled = true;
 let stats;
 
 const crossFadeControls = [];
 
-/****************************
-*  Rei Parameters
-****************************/
-let ReiMixer, ReiModel, ReiSkeleton;
-let temp;
+let camFOV = 60;
 
-let currentBaseAction = 'idle';
-let allActions = [];
-const baseActions = {
-    idle: { weight: 1 },
-    walk: { weight: 0 },
-    run: { weight: 0 },
-};
-const additiveActions = {
-    
-};
-let panelSettings, numAnimations;
+
+// characters
+let reiCharacter = null;
+const reiPath = "chars/rei_base.fbx";
+let reiStates = [];
+const reiAnimations = [
+    {id: 1, path:"chars/rei_idle.fbx", state:"idle"},
+    {id: 2, path:"chars/rei_walk.fbx", state:"walk"},
+    {id: 3, path:"chars/rei_backwalk.fbx", state:"backwalk"},
+    {id: 4, path:"chars/rei_walk_turn_right.fbx", state:"turn_right"},
+    {id: 5, path:"chars/rei_walk_turn_left.fbx", state:"turn_left"},
+    {id: 6, path:"chars/rei_run.fbx", state:"run"}
+];
+
+let MixerReady = false;
+
+// sounds
+const stepSoundsPaths = [
+    "sounds/pl_tile1.wav",
+    "sounds/pl_tile2.wav",
+    "sounds/pl_tile3.wav",
+    "sounds/pl_tile4.wav",
+    "sounds/pl_tile5.wav"
+];
+let stepSounds = [];
+
+const listener = new THREE.AudioListener();
 
 /****************************
 *  GUI Parameters
@@ -53,7 +70,7 @@ function initThree()
     ****************************/
     const loadingScreen = document.getElementById("loading-screen");
 
-    const loadingManager = new THREE.LoadingManager(() => {
+    loadingManager = new THREE.LoadingManager(() => {
         document.getElementById("startBtn").style.opacity = 1;
         document.getElementById("loader").remove();
         WaitButton();
@@ -89,7 +106,6 @@ function initThree()
     /****************************
     *  THREE.JS Setup
     ****************************/
-
     canvas = document.querySelector("#canvas");
 
     // renderer
@@ -103,22 +119,20 @@ function initThree()
     stats = new Stats();
     container.appendChild( stats.dom );
 
-
     // scene
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0a0a0);
-    // scene.fog = new THREE.Fog(scene.background, 200, 1000);
     scene.fog = new THREE.Fog( 0xa0a0a0, 10, 50 );
 
     // camera
     const aspect = window.innerWidth / window.innerHeight;
     const near = 0.01;
-    const far = 500;
-    const camFOV = 60;
+    const far = 5000;
     
     camera = new THREE.PerspectiveCamera( camFOV, aspect, near, far );
-    camera.position.set(-2.5, 1.5, 0.0);
+    camera.position.set(2.5, 1.5, 0.0);
     camera.lookAt(0.0, 1.2, 0.0);
+    camera.add(listener);
 
     // lights
     const hemiLight = new THREE.HemisphereLight(0xFFEEB1, 0x202020, 1.2);
@@ -135,80 +149,137 @@ function initThree()
     dirLight.shadow.camera.left = - 2;
     dirLight.shadow.camera.right = 2;
     dirLight.shadow.camera.near = 0.1;
-    dirLight.shadow.camera.far = 40;
+    dirLight.shadow.camera.far = 500;
     scene.add( dirLight );
 
     // ground
-    const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100 ), new THREE.MeshPhongMaterial( { color: 0xcbcbcb, depthWrite: false } ) );
+    const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100 ), new THREE.MeshPhongMaterial( { color: 0xcbcbcb, depthWrite: true } ) );
     mesh.rotation.x = - Math.PI / 2;
     mesh.receiveShadow = true;
     scene.add( mesh );
 
-    // loading models
-    const loader = new FBXLoader( loadingManager );
-    ReiMixer = new THREE.AnimationMixer;
-    loader.load('chars/rei_base.fbx', ( character ) => 
-    {
-        character.scale.set(1.0, 1.0, 1.0);
-        character.rotation.set(0, -Math.PI/2, 0);
-    
-        // shadows
-        character.traverse(( object ) => {
-            if ( object.isMesh ) object.castShadow = true;
-        });
+    // crating and setting the mais character
+    reiCharacter = new CHAR.Character(scene, reiPath, reiAnimations, loadingManager);
 
-        ReiSkeleton = new THREE.SkeletonHelper( character );
-        // ReiSkeleton.visible = false;
-        scene.add( ReiSkeleton );
-    
-        ReiMixer = new THREE.AnimationMixer( character );
-
-        // base character
-        allActions[0] = ReiMixer.clipAction(character.animations[0]);
-        
-        // idle
-        loader.load('chars/rei_idle.fbx', (character) =>
-        {
-            allActions[1] = ReiMixer.clipAction(character.animations[0]);
-        })
-        
-        console.log(allActions);
-
-        ReiModel = character;
-        scene.add(character);
-    }, 
-    (xhr) => 
-    {
-        // console.log((xhr.loaded / xhr.total) * 100 + '%loaded')
-        let loadMsg = (xhr.loaded / xhr.total).toPrecision(4) * 100 + '% loaded.';
-        coutAssetLoading(loadMsg, "Rei Base")
-    },
-    (error) =>
-    {
-        cerr(error);
+    reiAnimations.forEach((element, i) => {
+        reiStates[i] = element.state;
     });
+
+    reiCharacter.FSM = new CHAR.FiniteStateMachine(reiStates);
+    reiCharacter.CharacterControl = new CHAR.CharacterControl();
+    reiCharacter.sounds = new CHAR.SoundEngine(stepSoundsPaths, stepSounds, listener);
 
     renderer.setAnimationLoop( animate );
 }
 
 function animate()
 {
-    updateAnimations();    
-
+    updateAnimations();
     
     renderer.render( scene, camera );
     if( statsEnabled ) stats.update();
 }
 
+// for step sounds
+let lastStepTime = 0; // Marca o tempo do último som de passo
+let stepInterval = 0; // Intervalo mínimo entre sons de passos (em segundos)
+
+// for camera shaking on run state
+let bobbingAmplitude = 0.05; // Amplitude da oscilação
+let bobbingFrequency = 4;   // Frequência da oscilação
 function updateAnimations()
 {
     delta = clock.getDelta();
-    animationTimer = clock.getElapsedTime();
+    myElapsedTime = clock.getElapsedTime();
+    timerSeconds = Math.floor(clock.getElapsedTime());
 
-    if( ReiMixer )
+    coutAssetLoading(timerSeconds, "Seconds")
+
+    if(reiCharacter.theMixer)
     {
-        ReiMixer.update(delta);
+        MixerReady = true;
+        
+        // uptades the camera 
+        const cameraOffset = new THREE.Vector3(-0.25, 1.4, -1.5);
+        const newPosition = cameraOffset.clone().applyQuaternion(reiCharacter._mesh.quaternion).add(reiCharacter._mesh.position);
+       
+        camera.lookAt(reiCharacter._position.x, reiCharacter._position.y + 1, reiCharacter._position.z - 0.1);
+        camera.fov = 60;
+
+        // smoothing camera 
+        cameraTargetPosition.copy(newPosition);
+        camera.position.lerp(cameraTargetPosition, 0.1);     
+        
+        cameraTargetQuaternion.copy(camera.quaternion);
+        camera.quaternion.slerp(cameraTargetQuaternion, 0.1);
+        
+        // updates the character controls
+        reiCharacter.CharacterControl.Update(reiCharacter, delta);
+        
+        // uptades the FSM
+        reiCharacter.FSM.Update(reiCharacter);
+        
+        // play step sound        
+        if(reiCharacter._activeAction)
+        {
+            let time = reiCharacter.theMixer.time % reiCharacter._activeAction._clip.duration;
+            // time = Math.floor(time)
+            // console.log(time);
+            coutAssetLoading(time.toPrecision(1), "time")
+            time = time.toPrecision(1);
+
+            const currentTime = reiCharacter.theMixer.time;
+            const timeElapsed = currentTime - lastStepTime;
+
+            if( reiCharacter.FSM.getActiveState() == "walk" || reiCharacter.FSM.getActiveState() == "backwalk" )
+            {
+                stepInterval = 0.5;
+                if( timeElapsed > stepInterval )
+                {
+                    reiCharacter.sounds.playStep();
+                    lastStepTime = currentTime;
+                }
+            }
+
+            if( reiCharacter.FSM.getActiveState() == "run" )
+            {
+                const bobbingY = Math.sin(myElapsedTime * bobbingFrequency) * bobbingAmplitude;    // Oscilação vertical
+                const bobbingX = Math.sin(myElapsedTime * bobbingFrequency * 0.5) * bobbingAmplitude * 0.5; // Oscilação horizontal
+
+                stepInterval = 0.34;
+                if( timeElapsed > stepInterval )
+                {
+                    reiCharacter.sounds.playStep();
+                    lastStepTime = currentTime;
+                }
+
+                // following camera
+                camera.position.set(newPosition.x + bobbingX, newPosition.y + bobbingY, newPosition.z);
+                camera.lookAt(reiCharacter._position.x, reiCharacter._position.y + 1, reiCharacter._position.z - 0.1);
+                camera.fov = 65;
+            }
+
+            if( reiCharacter.FSM.getActiveState() == "turn_left" || reiCharacter.FSM.getActiveState() == "turn_right" )
+            {
+                stepInterval = 0.6;
+                if( timeElapsed > stepInterval )
+                {
+                    reiCharacter.sounds.playStep();
+                    lastStepTime = currentTime;
+                }
+            }
+        }        
+        
+        // updates the delta (needs to be in the end)
+        reiCharacter.update(delta);
+        camera.updateProjectionMatrix();
     }
+
+    // if( timerSeconds > 0 && playOnce)
+    // {
+    //     // reiCharacter.FSM.setActiveState("idle");
+    //     playOnce = false;
+    // }
 }
 
 // Create UI
@@ -217,60 +288,6 @@ function createUI()
     gui = new GUI({ width: 350 });
     gui.close();
     // const cubeFolder = gui.addFolder('Console')
-}
-
-// Console 
-
-// prints a message on the screen console
-function cout(message) 
-{
-    const consoleMessages = document.getElementById("console-messages");
-    const theMessage = document.createElement("li");
-    theMessage.appendChild(document.createTextNode(message));
-    consoleMessages.appendChild(theMessage);
-
-    // auto scroll to bottom
-    const console = document.getElementById("console")
-    console.scrollTo(0, console.scrollHeight);
-
-}
-
-// prints a message on the screen console for loading assets
-function coutAssetLoading(message, assetName) 
-{
-    const consoleMessages = document.getElementById("console-messages");
-
-    const messageOnList = document.getElementById(assetName);
-    if(messageOnList)
-    {
-        consoleMessages.removeChild(messageOnList);
-    }
-
-    const theMessage = document.createElement("li");
-    theMessage.id = assetName;
-    theMessage.appendChild(document.createTextNode(assetName + ": " + message));
-    consoleMessages.appendChild(theMessage);
-
-    // auto scroll to bottom
-    const console = document.getElementById("console")
-    console.scrollTo(0, console.scrollHeight);
-}
-
-// displays an error on the screen console
-function cerr(message) 
-{
-    const consoleMessages = document.getElementById("console-messages");
-    const theMessage = document.createElement("li");
-    theMessage.style.color = "tomato";
-    theMessage.style.fontWeight = "bolder";
-    theMessage.appendChild(document.createTextNode(message));
-    consoleMessages.appendChild(theMessage);
-
-    // auto scroll to bottom
-    const console = document.getElementById("console")
-    console.scrollTo(0, console.scrollHeight);
-
-    ok = false;
 }
 
 // Resize the window on size change
