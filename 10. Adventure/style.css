@@ -155,7 +155,7 @@ p {
 /* GUI Style */
 #console {
     position: absolute;
-    /* max-height: 125px; */
+    max-height: 125px;
     /* width: 50vw; */
     /* right: 30px; */
     bottom: 10px;

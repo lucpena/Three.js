@@ -26,6 +26,28 @@ const crossFadeControls = [];
 
 let camFOV = 60;
 
+// textures
+const textureLoader = new THREE.TextureLoader();
+let pavementTextures = {
+    colorTexture: textureLoader.load("textures/Pavement_COLOR.png"),
+    displacementTexture: textureLoader.load("textures/Pavement_DISP.png"),
+    normalTexture: textureLoader.load("textures/Pavement_NRM.png"),
+    aoTexture: textureLoader.load("textures/Pavement_OCC.png"),
+    specularTexture: textureLoader.load("textures/Pavement_SPEC.png"),
+};
+const scale = 100; // scales all textures
+Object.values(pavementTextures).forEach(texture => {
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(scale, scale);
+});
+const pavementMaterial = new THREE.MeshStandardMaterial({
+    map: pavementTextures.colorTexture,                // Textura de cor
+    displacementMap: pavementTextures.displacementTexture, // Textura de deslocamento
+    displacementScale: 0.1,                            // Ajuste do deslocamento
+    normalMap: pavementTextures.normalTexture,         // Textura normal
+    aoMap: pavementTextures.aoTexture,                 // Textura de oclusão ambiental
+    specularMap: pavementTextures.specularTexture,     // Textura especular
+});
 
 // characters
 let reiCharacter = null;
@@ -42,13 +64,16 @@ const reiAnimations = [
 
 let MixerReady = false;
 
+// other models
+let portalRadio = null;
+const portalRadioPath = ["props/poral-radio/scene.gltf"];
+
 // sounds
 const stepSoundsPaths = [
-    "sounds/pl_tile1.wav",
-    "sounds/pl_tile2.wav",
-    "sounds/pl_tile3.wav",
-    "sounds/pl_tile4.wav",
-    "sounds/pl_tile5.wav"
+    "sounds/pl_step1.wav",
+    "sounds/pl_step2.wav",
+    "sounds/pl_step3.wav",
+    "sounds/pl_step4.wav"
 ];
 let stepSounds = [];
 
@@ -144,21 +169,22 @@ function initThree()
     const dirLight = new THREE.DirectionalLight( 0xffffff, 3 );
     dirLight.position.set( 3, 10, 10 );
     dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 2;
-    dirLight.shadow.camera.bottom = - 2;
-    dirLight.shadow.camera.left = - 2;
-    dirLight.shadow.camera.right = 2;
-    dirLight.shadow.camera.near = 0.1;
-    dirLight.shadow.camera.far = 500;
+    // dirLight.shadow.camera.top = 2;
+    // dirLight.shadow.camera.bottom = - 2;
+    // dirLight.shadow.camera.left = - 2;
+    // dirLight.shadow.camera.right = 2;
+    // dirLight.shadow.camera.near = 0.1;
+    // dirLight.shadow.camera.far = 500;
     scene.add( dirLight );
 
     // ground
-    const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100 ), new THREE.MeshPhongMaterial( { color: 0xcbcbcb, depthWrite: true } ) );
+    const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100 ), pavementMaterial );
     mesh.rotation.x = - Math.PI / 2;
     mesh.receiveShadow = true;
+    mesh.position.set(0, -0.05, 0);
     scene.add( mesh );
 
-    // crating and setting the mais character
+    // crating and setting the main character
     reiCharacter = new CHAR.Character(scene, reiPath, reiAnimations, loadingManager);
 
     reiAnimations.forEach((element, i) => {
@@ -167,7 +193,7 @@ function initThree()
 
     reiCharacter.FSM = new CHAR.FiniteStateMachine(reiStates);
     reiCharacter.CharacterControl = new CHAR.CharacterControl();
-    reiCharacter.sounds = new CHAR.SoundEngine(stepSoundsPaths, stepSounds, listener);
+    reiCharacter.sounds = new CHAR.SoundEngine(stepSoundsPaths, stepSounds, listener, 0.5);
 
     renderer.setAnimationLoop( animate );
 }

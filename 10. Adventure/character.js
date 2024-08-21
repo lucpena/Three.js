@@ -46,7 +46,7 @@ export class Character {
                 (xhr) =>
                 {
                     let loadMsg = (xhr.loaded / xhr.total).toPrecision(4) * 100 + '% loaded.';
-                    // coutAssetLoading(loadMsg, animation.path)
+                    coutAssetLoading(loadMsg, animation.path)
                 },
                 (error) =>
                 {
@@ -57,7 +57,7 @@ export class Character {
         (xhr) =>
         {
             let loadMsg = (xhr.loaded / xhr.total).toPrecision(4) * 100 + '% loaded.';
-            // coutAssetLoading(loadMsg, fbxPath)
+            coutAssetLoading(loadMsg, fbxPath)
         },
         (error) =>
         {
@@ -80,14 +80,14 @@ export class Character {
         }
 
         // fixing animations blending with others
-        if( currentAnimation == "idle" || currentAnimation == "walk" )
+        if( currentAnimation == "walk" )
         {
             const turnLeftStop = Object.values(this._animations).find(a => a.state === "turn_right");
             const turnRightStop = Object.values(this._animations).find(a => a.state === "turn_left");
             const backwalkStop = Object.values(this._animations).find(a => a.state === "backwalk");
             const runStop = Object.values(this._animations).find(a => a.state === "run");
 
-            if(turnLeftStop && turnRightStop && backwalkStop)
+            if(turnLeftStop && turnRightStop && backwalkStop && runStop)
             {
                 turnLeftStop.stop();
                 turnRightStop.stop();
@@ -104,7 +104,7 @@ export class Character {
             const walkStop = Object.values(this._animations).find(a => a.state === "walk");
             const runStop = Object.values(this._animations).find(a => a.state === "run");
 
-            if(turnLeftStop && turnRightStop && backwalkStop)
+            if(turnLeftStop && turnRightStop && backwalkStop && runStop)
             {
                 turnLeftStop.stop();
                 turnRightStop.stop();
@@ -264,7 +264,7 @@ export class CharacterControl
     constructor()
     {
         this._input = new ControlsInput();
-        this._acceleration = 2;
+        this._acceleration = 1.5;
         this._direction = null;
     }
 
@@ -340,7 +340,7 @@ export class CharacterControl
 
 export class SoundEngine
 {
-    constructor(stepSoundsPaths, stepSounds, listener)
+    constructor(stepSoundsPaths, stepSounds, listener, volume)
     {
         this._stepSoundsPaths = stepSoundsPaths;
         this._stepSounds = stepSounds;
@@ -354,7 +354,7 @@ export class SoundEngine
             {
                 _sound.setBuffer(buffer);
                 _sound.setLoop(false);
-                _sound.setVolume(0.6);
+                _sound.setVolume(volume);
                 stepSounds.push(_sound);
             })
         });
