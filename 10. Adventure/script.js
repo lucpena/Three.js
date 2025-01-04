@@ -1,10 +1,11 @@
 import * as THREE from "three";
-//import * as CANNON from "cannon";
 
 import Stats from "statssrc";
 import { GUI } from "guisrc";
+import { PositionalAudioHelper } from "posaudiohelpersrc";
 
-import { cout, coutAssetLoading, cerr } from "./utils.js";
+import { cout, cerr, coutWarning } from "./utils.js";
+import * as UTILS from "./utils.js";
 import * as CHAR from "./character.js";
 
 let canvas, camera, scene, renderer, container;
@@ -22,9 +23,10 @@ let btnPressed = false;
 let statsEnabled = true;
 let stats;
 
-const crossFadeControls = [];
-
 let camFOV = 60;
+
+// lights
+let dirLight;
 
 // textures
 const textureLoader = new THREE.TextureLoader();
@@ -35,10 +37,10 @@ let pavementTextures = {
     aoTexture: textureLoader.load("textures/Pavement_OCC.png"),
     specularTexture: textureLoader.load("textures/Pavement_SPEC.png"),
 };
-const scale = 100; // scales all textures
+const pavementScale = 100; // scales all textures
 Object.values(pavementTextures).forEach(texture => {
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(scale, scale);
+    texture.repeat.set(pavementScale, pavementScale);
 });
 const pavementMaterial = new THREE.MeshStandardMaterial({
     map: pavementTextures.colorTexture,                // Textura de cor
@@ -66,7 +68,7 @@ let MixerReady = false;
 
 // other models
 let portalRadio = null;
-const portalRadioPath = ["props/poral-radio/scene.gltf"];
+const portalRadioPath = "props/radio.glb";
 
 // sounds
 const stepSoundsPaths = [
@@ -76,23 +78,53 @@ const stepSoundsPaths = [
     "sounds/pl_step4.wav"
 ];
 let stepSounds = [];
+let radioSongElement;
+const radioMaxVolume = 0.7;
+
+// const radioMusicsPaths = [
+//     "music/portal.mp3"
+// ];
+// let radioMusic = [];
 
 const listener = new THREE.AudioListener();
+let radioPositionalAudio;
+let positionalAudioHelper;
 
-/****************************
-*  GUI Parameters
-****************************/
+// setting AMMO Physics Engine
+const gravityConstant = - 9.8;
+let collisionConfiguration;
+let dispatcher;
+let broadphase;
+let solver;
+let softBodySolver;
+let physicsWorld;
+
+const rigidBodies = [];
+const margin = 0.05;
+let hinge;
+let rope;
+let transformAux1;
+let armMovement = 0;
+
+// GUI Parameters
 let gui;
 
-initThree();
-createUI();
-animate();
+// Initiating
+window.addEventListener('DOMContentLoaded', async() =>
+{    
+    cout("loaded.", "DOM");
+    cout("loading...", "Three.js");
+    initThree();
+    cout("loading", "AMMO.js (Physics)");
+    //initPhysics();
+    createUI();
+    animate();
+});
+
 
 function initThree() 
 {
-     /****************************
-    *  LOADING SCREEN
-    ****************************/
+    // loading screen
     const loadingScreen = document.getElementById("loading-screen");
 
     loadingManager = new THREE.LoadingManager(() => {
@@ -138,6 +170,7 @@ function initThree()
     renderer.setPixelRatio(2);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
+    renderer.toneMapping = THREE.ReinhardToneMapping;
     container.appendChild(renderer.domElement);
 
     // stats    
@@ -157,6 +190,7 @@ function initThree()
     camera = new THREE.PerspectiveCamera( camFOV, aspect, near, far );
     camera.position.set(2.5, 1.5, 0.0);
     camera.lookAt(0.0, 1.2, 0.0);
+
     camera.add(listener);
 
     // lights
@@ -166,15 +200,25 @@ function initThree()
     hemiLight.position.set(0, 20, 0);
     scene.add( hemiLight );
 
-    const dirLight = new THREE.DirectionalLight( 0xffffff, 3 );
+    dirLight = new THREE.DirectionalLight( 0xffffff, 3 );
     dirLight.position.set( 3, 10, 10 );
     dirLight.castShadow = true;
-    // dirLight.shadow.camera.top = 2;
-    // dirLight.shadow.camera.bottom = - 2;
-    // dirLight.shadow.camera.left = - 2;
-    // dirLight.shadow.camera.right = 2;
-    // dirLight.shadow.camera.near = 0.1;
-    // dirLight.shadow.camera.far = 500;
+
+    // Ajuste dos limites da shadow camera
+    dirLight.shadow.camera.top = 20;
+    dirLight.shadow.camera.bottom = -20;
+    dirLight.shadow.camera.left = -20;
+    dirLight.shadow.camera.right = 20;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 50;
+
+    // Aumente a resolução do shadow map
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+
+    // Ajuste o bias da sombra
+    dirLight.shadow.bias = -0.0005;
+
     scene.add( dirLight );
 
     // ground
@@ -193,14 +237,63 @@ function initThree()
 
     reiCharacter.FSM = new CHAR.FiniteStateMachine(reiStates);
     reiCharacter.CharacterControl = new CHAR.CharacterControl();
-    reiCharacter.sounds = new CHAR.SoundEngine(stepSoundsPaths, stepSounds, listener, 0.5);
+    reiCharacter.sounds = new CHAR.StepSounds(stepSoundsPaths, stepSounds, listener, 0.5);
+
+    // placing other objects
+    portalRadio = new UTILS._glTFLoader(scene, portalRadioPath, 1.0, loadingManager);
+
+    // setting sounds
+    const audioContext = listener.context;
+
+    radioPositionalAudio = new THREE.PositionalAudio(listener);
+    radioSongElement = document.getElementById("music-better-off-alone");
+    // radioSongElement = document.getElementById("music-portal");
+    radioPositionalAudio.setMediaElementSource(radioSongElement);
+    radioPositionalAudio.setRefDistance(1);
+    radioPositionalAudio.setMaxDistance(5);
+    radioPositionalAudio.setDirectionalCone( 180, 230, 0.3 );
+    
+    const highPassFilter = audioContext.createBiquadFilter();
+    highPassFilter.type = 'highpass';
+    highPassFilter.frequency.value = 500; // Ajuste a frequência conforme necessário
+
+    // Filtro Low-Pass
+    const lowPassFilter = audioContext.createBiquadFilter();
+    lowPassFilter.type = 'lowpass';
+    lowPassFilter.frequency.value = 5000; // Ajuste a frequência conforme necessário
+
+    // Conectando os filtros ao áudio
+    highPassFilter.connect(lowPassFilter);
+    radioPositionalAudio.setFilter(highPassFilter);
+
+    lowPassFilter.connect(radioPositionalAudio.getOutput());
+    radioPositionalAudio.setFilter(highPassFilter);
 
     renderer.setAnimationLoop( animate );
+}
+
+function initPhysics()
+{
+    Ammo().then( function ( AmmoLib ) {
+        Ammo = AmmoLib;
+    } );
+
+    collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
+    dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+    broadphase = new Ammo.btDbvtBroadphase();
+    solver = new Ammo.btSequentialImpulseConstraintSolver();
+    softBodySolver = new Ammo.btDefaultSoftBodySolver();
+    physicsWorld = new Ammo.btSoftRigidDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration, softBodySolver );
+    physicsWorld.setGravity( new Ammo.btVector3( 0, gravityConstant, 0 ) );
+    physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, gravityConstant, 0 ) );
+
+    transformAux1 = new Ammo.btTransform();
 }
 
 function animate()
 {
     updateAnimations();
+    // updatePhysics();
     
     renderer.render( scene, camera );
     if( statsEnabled ) stats.update();
@@ -213,14 +306,50 @@ let stepInterval = 0; // Intervalo mínimo entre sons de passos (em segundos)
 // for camera shaking on run state
 let bobbingAmplitude = 0.05; // Amplitude da oscilação
 let bobbingFrequency = 4;   // Frequência da oscilação
+
+let setOnceRadio = true;
+let jumpFirstStep = true;
+const radioRotation = new THREE.Euler(0, - Math.PI / 2, 0, 'XYZ');
 function updateAnimations()
 {
     delta = clock.getDelta();
     myElapsedTime = clock.getElapsedTime();
     timerSeconds = Math.floor(clock.getElapsedTime());
 
-    coutAssetLoading(timerSeconds, "Seconds")
+    cout(timerSeconds, "Seconds");
 
+    // updating the radio
+    if(portalRadio && timerSeconds > 1 && setOnceRadio)
+    {
+        portalRadio.scale = 0.015;
+        portalRadio.rotation = radioRotation;
+        portalRadio.position = new THREE.Vector3(-3, 1, 0);
+        portalRadio._add(radioPositionalAudio);       
+        radioSongElement.play();
+
+        setOnceRadio = false;
+    }
+
+    if(portalRadio && timerSeconds > 1)
+    {
+        portalRadio._mesh.rotation.y += delta;
+        portalRadio._mesh.position.y = 1 + Math.sin(myElapsedTime) / 25;
+        
+        // the sound gets lower if the camera/main character is further from the radio source
+        const ReiRadioXdistance = Math.abs(portalRadio._mesh.position.x - reiCharacter._mesh.position.x);
+        const ReiRadioZdistance = Math.abs(portalRadio._mesh.position.z - reiCharacter._mesh.position.z);
+
+        if(ReiRadioXdistance > 1 || ReiRadioZdistance > 1)
+        {
+            radioSongElement.volume = Math.max(0, (radioMaxVolume - (ReiRadioXdistance + ReiRadioZdistance) * 4 / 100));
+            cout(radioSongElement.volume, "Radio Volume")
+        } else {
+            radioSongElement.volume = radioMaxVolume;
+            cout(radioSongElement.volume, "Radio Volume")
+        }
+    }
+
+    // updating main character
     if(reiCharacter.theMixer)
     {
         MixerReady = true;
@@ -229,7 +358,7 @@ function updateAnimations()
         const cameraOffset = new THREE.Vector3(-0.25, 1.4, -1.5);
         const newPosition = cameraOffset.clone().applyQuaternion(reiCharacter._mesh.quaternion).add(reiCharacter._mesh.position);
        
-        camera.lookAt(reiCharacter._position.x, reiCharacter._position.y + 1, reiCharacter._position.z - 0.1);
+        camera.lookAt(reiCharacter._position.x, reiCharacter._position.y + 1, reiCharacter._position.z);
         camera.fov = 60;
 
         // smoothing camera 
@@ -249,51 +378,57 @@ function updateAnimations()
         if(reiCharacter._activeAction)
         {
             let time = reiCharacter.theMixer.time % reiCharacter._activeAction._clip.duration;
-            // time = Math.floor(time)
-            // console.log(time);
-            coutAssetLoading(time.toPrecision(1), "time")
+            cout(time.toPrecision(1), "time")
             time = time.toPrecision(1);
 
             const currentTime = reiCharacter.theMixer.time;
             const timeElapsed = currentTime - lastStepTime;
 
-            if( reiCharacter.FSM.getActiveState() == "walk" || reiCharacter.FSM.getActiveState() == "backwalk" )
+            cout(jumpFirstStep, "jumpFirstStep")
+            if(!jumpFirstStep)
             {
-                stepInterval = 0.5;
-                if( timeElapsed > stepInterval )
+                if( reiCharacter.FSM.getActiveState() == "walk" || reiCharacter.FSM.getActiveState() == "backwalk" )
                 {
-                    reiCharacter.sounds.playStep();
-                    lastStepTime = currentTime;
-                }
-            }
-
-            if( reiCharacter.FSM.getActiveState() == "run" )
-            {
-                const bobbingY = Math.sin(myElapsedTime * bobbingFrequency) * bobbingAmplitude;    // Oscilação vertical
-                const bobbingX = Math.sin(myElapsedTime * bobbingFrequency * 0.5) * bobbingAmplitude * 0.5; // Oscilação horizontal
-
-                stepInterval = 0.34;
-                if( timeElapsed > stepInterval )
-                {
-                    reiCharacter.sounds.playStep();
-                    lastStepTime = currentTime;
+                    stepInterval = 0.5;
+                    if( timeElapsed > stepInterval )
+                    {
+                        reiCharacter.sounds.playStep();
+                        lastStepTime = currentTime;
+                    }
                 }
 
-                // following camera
-                camera.position.set(newPosition.x + bobbingX, newPosition.y + bobbingY, newPosition.z);
-                camera.lookAt(reiCharacter._position.x, reiCharacter._position.y + 1, reiCharacter._position.z - 0.1);
-                camera.fov = 65;
-            }
-
-            if( reiCharacter.FSM.getActiveState() == "turn_left" || reiCharacter.FSM.getActiveState() == "turn_right" )
-            {
-                stepInterval = 0.6;
-                if( timeElapsed > stepInterval )
+                if( reiCharacter.FSM.getActiveState() == "run" )
                 {
-                    reiCharacter.sounds.playStep();
-                    lastStepTime = currentTime;
+                    const bobbingY = Math.sin(myElapsedTime * bobbingFrequency) * bobbingAmplitude;    // Oscilação vertical
+                    const bobbingX = Math.sin(myElapsedTime * bobbingFrequency * 0.5) * bobbingAmplitude * 0.5; // Oscilação horizontal
+
+                    stepInterval = 0.34;
+                    if( timeElapsed > stepInterval )
+                    {
+                        reiCharacter.sounds.playStep();
+                        lastStepTime = currentTime;
+                    }
+
+                    // following camera
+                    camera.position.set(newPosition.x + bobbingX, newPosition.y + bobbingY, newPosition.z);
+                    camera.lookAt(reiCharacter._position.x, reiCharacter._position.y + 1, reiCharacter._position.z - 0.1);
+                    camera.fov = 65;
                 }
+
+                if( reiCharacter.FSM.getActiveState() == "turn_left" || reiCharacter.FSM.getActiveState() == "turn_right" )
+                {
+                    stepInterval = 0.6;
+                    if( timeElapsed > stepInterval )
+                    {
+                        reiCharacter.sounds.playStep();
+                        lastStepTime = currentTime;
+                    }
+                }                
             }
+            else if( reiCharacter.FSM.getActiveState() != "idle" ) {
+                jumpFirstStep = false;
+            }     
+
         }        
         
         // updates the delta (needs to be in the end)
@@ -301,12 +436,13 @@ function updateAnimations()
         camera.updateProjectionMatrix();
     }
 
-    // if( timerSeconds > 0 && playOnce)
-    // {
-    //     // reiCharacter.FSM.setActiveState("idle");
-    //     playOnce = false;
-    // }
 }
+
+function updatePhysics()
+{
+
+}
+
 
 // Create UI
 function createUI()

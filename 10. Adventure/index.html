@@ -5,12 +5,19 @@
 	<meta charset="utf-8">
 	<title>Three.JS Application</title>
 	<link rel="icon" type="image/x-icon" href="./favicon/favicon.ico">
-	<script src="https://unpkg.com/cannon"></script>
+	<script src="https://unpkg.com/three/examples/jsm/libs/ammo.wasm"></script>
 	<link rel="stylesheet" href="style.css">
 
 </head>
 
 <body>
+	<audio id="music-portal" loop preload="auto" style="display: none">
+		<source src="music/portal original.mp3" type="audio/mp3">
+	</audio>
+
+	<audio id="music-better-off-alone" loop preload="auto" style="display: none">
+		<source src="music/better_off_alone_128.mp3" type="audio/mp3">
+	</audio>
 
 	<section id="loading-screen">
 		<p>Loading...</p>
@@ -67,8 +74,8 @@
 				"fpssrc": "https://unpkg.com/three/examples/jsm/controls/FirstPersonControls.js",
 				"fbxsrc": "https://unpkg.com/three/examples/jsm/loaders/FBXLoader.js",
 				"RectAreaLightHelperSRC": "https://unpkg.com/three/examples/jsm/helpers/RectAreaLightHelper.js",
-				"guisrc": "https://unpkg.com/three/examples/jsm/libs/lil-gui.module.min.js",
-				"cannon": "https://unpkg.com/cannon"
+				"posaudiohelpersrc": "https://unpkg.com/three/examples/jsm/helpers/PositionalAudioHelper.js",
+				"guisrc": "https://unpkg.com/three/examples/jsm/libs/lil-gui.module.min.js"
 			}
 		}
 		</script>

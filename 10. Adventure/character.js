@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { FBXLoader } from "fbxsrc";
 
-import { cout, coutAssetLoading, cerr } from "./utils.js"
+import { cout, coutWarning, cerr } from "./utils.js"
 
 export class Character {
     constructor(scene, fbxPath, animations, loadingManager )
@@ -46,7 +46,7 @@ export class Character {
                 (xhr) =>
                 {
                     let loadMsg = (xhr.loaded / xhr.total).toPrecision(4) * 100 + '% loaded.';
-                    coutAssetLoading(loadMsg, animation.path)
+                    cout(loadMsg, animation.path)
                 },
                 (error) =>
                 {
@@ -57,7 +57,7 @@ export class Character {
         (xhr) =>
         {
             let loadMsg = (xhr.loaded / xhr.total).toPrecision(4) * 100 + '% loaded.';
-            coutAssetLoading(loadMsg, fbxPath)
+            cout(loadMsg, fbxPath)
         },
         (error) =>
         {
@@ -130,6 +130,20 @@ export class Character {
             }
             
         }
+        if( currentAnimation == "turn_right" || currentAnimation == "turn_left"  )
+        {
+            const backwalkStop = Object.values(this._animations).find(a => a.state === "backwalk");
+            const walkStop = Object.values(this._animations).find(a => a.state === "walk");
+            const runStop = Object.values(this._animations).find(a => a.state === "run");
+
+            if(backwalkStop && walkStop && runStop)
+            {
+                backwalkStop.stop();
+                walkStop.stop();
+                runStop.stop();
+            }
+            
+        }
 
         let stateAnimation = Object.values(this._animations).find(a => a.state === currentAnimation)
         
@@ -146,6 +160,11 @@ export class Character {
         {
             this._mixer.update(deltaTime);
         }
+    }
+
+    _add( p )
+    {   
+        this._mesh.add( p );
     }
 };
 
@@ -165,7 +184,7 @@ export class FiniteStateMachine {
             this._states.name = element;
         });
 
-        coutAssetLoading(this._states, "Added to FSM");
+        // cout(this._states, "Added to FSM");
     }
 
     setActiveState(state)
@@ -280,7 +299,7 @@ export class CharacterControl
             isWalking = false;
         }
 
-        coutAssetLoading(isWalking, "isWalking");
+        // cout(isWalking, "isWalking");
 
         if(!(this._input._keys.forward && this._input._keys.backward && this._input._keys.left && this._input._keys.right))
         {
@@ -338,7 +357,7 @@ export class CharacterControl
     }
 };
 
-export class SoundEngine
+export class StepSounds
 {
     constructor(stepSoundsPaths, stepSounds, listener, volume)
     {

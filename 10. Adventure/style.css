@@ -153,9 +153,20 @@ p {
 }
 
 /* GUI Style */
+ul {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+li {
+    margin-left: 10px;
+}
+
 #console {
     position: absolute;
-    max-height: 125px;
+    /* max-height: 125px; */
+    /* max-width: 50vw; */
     /* width: 50vw; */
     /* right: 30px; */
     bottom: 10px;
